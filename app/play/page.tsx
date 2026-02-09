@@ -1,8 +1,8 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { supabaseClient } from '../../lib/supabase/client';
+import Link from 'next/link';
 
 type DailySlot = {
   slot: number;
@@ -16,8 +16,8 @@ type DailyResponse = {
 };
 
 export default function PlayPage() {
-  const router = useRouter();
   const [isChecking, setIsChecking] = useState(true);
+  const [hasSession, setHasSession] = useState(false);
   const [daily, setDaily] = useState<DailyResponse | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
@@ -28,9 +28,12 @@ export default function PlayPage() {
     const load = async () => {
       const { data } = await supabaseClient.auth.getSession();
       if (!data.session) {
-        router.replace('/');
+        setHasSession(false);
+        setIsChecking(false);
         return;
       }
+
+      setHasSession(true);
 
       const dailyResult = await fetch('/api/daily');
       if (dailyResult.ok) {
@@ -51,7 +54,7 @@ export default function PlayPage() {
     return () => {
       isMounted = false;
     };
-  }, [router]);
+  }, []);
 
   const handleSubmit = async () => {
     if (!daily || !accessToken) {
@@ -83,6 +86,16 @@ export default function PlayPage() {
     return (
       <main>
         <p>Checking your session...</p>
+      </main>
+    );
+  }
+
+  if (!hasSession) {
+    return (
+      <main>
+        <h1>Play</h1>
+        <p>Start as Guest to play.</p>
+        <Link href="/">Back to start</Link>
       </main>
     );
   }

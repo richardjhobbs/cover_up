@@ -69,9 +69,13 @@ alter table daily_albums enable row level security;
 alter table plays enable row level security;
 alter table play_turns enable row level security;
 
-create policy "profiles_select_own" on profiles
+create policy "profiles_select_authenticated" on profiles
   for select
-  using (auth.uid() = id);
+  using (auth.role() = 'authenticated');
+
+create policy "profiles_insert_own" on profiles
+  for insert
+  with check (auth.uid() = id);
 
 create policy "profiles_update_own" on profiles
   for update

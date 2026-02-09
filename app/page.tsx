@@ -1,13 +1,13 @@
 'use client';
 
 import { type FormEvent, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabaseClient } from '../lib/supabase/client';
 
-const USERNAME_PATTERN = /^[A-Za-z0-9_-]{3,20}$/;
-const PENDING_USERNAME_KEY = 'pending_username';
+const USERNAME_PATTERN = /^[A-Za-z0-9_]{2,20}$/;
 
 export default function HomePage() {
-  const [email, setEmail] = useState('');
+  const router = useRouter();
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -18,17 +18,11 @@ export default function HomePage() {
     setError('');
     setMessage('');
 
-    const trimmedEmail = email.trim();
     const trimmedUsername = username.trim();
-
-    if (!trimmedEmail) {
-      setError('Email is required.');
-      return;
-    }
 
     if (!USERNAME_PATTERN.test(trimmedUsername)) {
       setError(
-        'Username must be 3–20 characters and use only letters, numbers, underscores, or dashes.'
+        'Username must be 2–20 characters and use only letters, numbers, or underscores.'
       );
       return;
     }
@@ -36,39 +30,28 @@ export default function HomePage() {
     setLoading(true);
 
     try {
-      const { data: existingUser, error: lookupError } = await supabaseClient
+      const { data: authData, error: authError } =
+        await supabaseClient.auth.signInAnonymously();
+
+      if (authError || !authData?.user) {
+        setError(authError?.message ?? 'Unable to start an anonymous session.');
+        return;
+      }
+
+      const { error: profileError } = await supabaseClient
         .from('profiles')
-        .select('id')
-        .eq('username', trimmedUsername)
-        .maybeSingle();
+        .upsert({
+          id: authData.user.id,
+          username: trimmedUsername,
+        });
 
-      if (lookupError) {
-        setError(lookupError.message);
+      if (profileError) {
+        setError(profileError.message);
         return;
       }
 
-      if (existingUser) {
-        setError('That username is already taken.');
-        return;
-      }
-
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(PENDING_USERNAME_KEY, trimmedUsername);
-      }
-
-      const { error: otpError } = await supabaseClient.auth.signInWithOtp({
-        email: trimmedEmail,
-        options: {
-          emailRedirectTo: 'http://localhost:3000/auth/callback',
-        },
-      });
-
-      if (otpError) {
-        setError(otpError.message);
-        return;
-      }
-
-      setMessage('Check your email and click the sign-in link.');
+      setMessage('Starting your session…');
+      router.replace('/today');
     } finally {
       setLoading(false);
     }
@@ -78,16 +61,7 @@ export default function HomePage() {
     <main>
       <h1>Cover Up</h1>
       <form onSubmit={handleSubmit}>
-        <p>Enter your email and choose a username to get started.</p>
-        <label>
-          Email
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-          />
-        </label>
+        <p>Choose a username to get started.</p>
         <label>
           Username
           <input
@@ -100,7 +74,7 @@ export default function HomePage() {
         {error ? <p role="alert">{error}</p> : null}
         {message ? <p role="status">{message}</p> : null}
         <button type="submit" disabled={loading}>
-          {loading ? 'Sending…' : 'Send sign-in link'}
+          {loading ? 'Creating session…' : 'Start playing'}
         </button>
       </form>
     </main>

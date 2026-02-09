@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getDailyCacheKey } from '../../../lib/daily/cache';
 import {
   buildDailyResponse,
+  type DailyAlbum,
   type DailySlot,
   type DailyTheme,
 } from '../../../lib/daily/selector';
@@ -40,6 +41,13 @@ const PLACEHOLDER_ALBUMS = [
   },
 ];
 
+type DailyAlbumRow = {
+  slot: number;
+  difficulty: number;
+  obscuration: Record<string, unknown> | null;
+  album: DailyAlbum | DailyAlbum[] | null;
+};
+
 async function getDailyTheme(date: string) {
   const { data, error } = await supabaseServer
     .from('daily_themes')
@@ -76,7 +84,7 @@ async function fetchDailyAlbums(date: string) {
   const { data, error } = await supabaseServer
     .from('daily_albums')
     .select(
-      'slot,difficulty,obscuration,album:albums(id,artist,title,year,country,cover_url)'
+      'slot,difficulty,obscuration,album:albums!inner(id,artist,title,year,country,cover_url)'
     )
     .eq('date', date)
     .order('slot');
@@ -85,7 +93,7 @@ async function fetchDailyAlbums(date: string) {
     throw error;
   }
 
-  return data ?? [];
+  return (data ?? []) as DailyAlbumRow[];
 }
 
 async function createDailyAlbums(date: string) {
@@ -146,19 +154,27 @@ export async function GET() {
 
   const dailyAlbums = await fetchDailyAlbums(date);
 
-  const slots: DailySlot[] = dailyAlbums.map((entry) => ({
-    slot: entry.slot,
-    difficulty: entry.difficulty,
-    obscuration: entry.obscuration ?? {},
-    album: {
-      id: entry.album.id,
-      artist: entry.album.artist,
-      title: entry.album.title,
-      year: entry.album.year ?? null,
-      country: entry.album.country ?? null,
-      cover_url: entry.album.cover_url ?? null,
-    },
-  }));
+  const slots: DailySlot[] = dailyAlbums.map((entry) => {
+    const album = Array.isArray(entry.album) ? entry.album[0] : entry.album;
+
+    if (!album) {
+      throw new Error(`Missing album for daily slot ${entry.slot}`);
+    }
+
+    return {
+      slot: entry.slot,
+      difficulty: entry.difficulty,
+      obscuration: entry.obscuration ?? {},
+      album: {
+        id: album.id,
+        artist: album.artist,
+        title: album.title,
+        year: album.year ?? null,
+        country: album.country ?? null,
+        cover_url: album.cover_url ?? null,
+      },
+    };
+  });
 
   return NextResponse.json(buildDailyResponse(date, theme, slots));
 }

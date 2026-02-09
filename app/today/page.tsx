@@ -18,6 +18,7 @@ type DailyResponse = {
 export default function TodayPage() {
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(true);
+  const [hasSession, setHasSession] = useState(false);
   const [daily, setDaily] = useState<DailyResponse | null>(null);
   const [hasPlayed, setHasPlayed] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -35,9 +36,12 @@ export default function TodayPage() {
       }
 
       if (!data.session) {
-        router.replace('/');
+        setHasSession(false);
+        setIsChecking(false);
         return;
       }
+
+      setHasSession(true);
 
       const today = new Date().toISOString().slice(0, 10);
       const [dailyResult, playsResult] = await Promise.all([
@@ -84,6 +88,16 @@ export default function TodayPage() {
     return (
       <main>
         <p>Checking your session...</p>
+      </main>
+    );
+  }
+
+  if (!hasSession) {
+    return (
+      <main>
+        <h1>Today&apos;s Wall</h1>
+        <p>Start as Guest to play.</p>
+        <Link href="/">Back to start</Link>
       </main>
     );
   }

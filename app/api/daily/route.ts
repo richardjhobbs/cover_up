@@ -40,17 +40,28 @@ const PLACEHOLDER_ALBUMS = [
   },
 ];
 
-async function ensureDailyTheme(date: string) {
+async function getDailyTheme(date: string) {
   const { data, error } = await supabaseServer
     .from('daily_themes')
-    .upsert(
-      {
-        date,
-        theme_name: 'Stage 1 Test Theme',
-        theme_type: 'test',
-      },
-      { onConflict: 'date' }
-    )
+    .select('date, theme_name, theme_type')
+    .eq('date', date)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data ?? null;
+}
+
+async function createDailyTheme(date: string) {
+  const { data, error } = await supabaseServer
+    .from('daily_themes')
+    .insert({
+      date,
+      theme_name: 'Stage 1 Test Theme',
+      theme_type: 'test',
+    })
     .select('date, theme_name, theme_type')
     .single();
 
@@ -77,9 +88,8 @@ async function fetchDailyAlbums(date: string) {
   return data ?? [];
 }
 
-async function createMissingDailyAlbums(date: string, missingSlots: number[]) {
-  const albumsToInsert = missingSlots.map((slot) => {
-    const placeholder = PLACEHOLDER_ALBUMS[slot - 1];
+async function createDailyAlbums(date: string) {
+  const albumsToInsert = PLACEHOLDER_ALBUMS.map((placeholder) => {
     return {
       source: 'placeholder',
       artist: placeholder.artist,
@@ -100,7 +110,7 @@ async function createMissingDailyAlbums(date: string, missingSlots: number[]) {
   }
 
   const dailyAlbumsToInsert = insertedAlbums.map((album, index) => {
-    const slot = missingSlots[index];
+    const slot = index + 1;
     return {
       date,
       slot,
@@ -122,20 +132,19 @@ async function createMissingDailyAlbums(date: string, missingSlots: number[]) {
 export async function GET() {
   const date = getDailyCacheKey();
 
-  const themeRow = await ensureDailyTheme(date);
+  let themeRow = await getDailyTheme(date);
+
+  if (!themeRow) {
+    themeRow = await createDailyTheme(date);
+    await createDailyAlbums(date);
+  }
+
   const theme: DailyTheme = {
     name: themeRow.theme_name,
     type: themeRow.theme_type,
   };
 
-  let dailyAlbums = await fetchDailyAlbums(date);
-  const existingSlots = new Set(dailyAlbums.map((album) => album.slot));
-  const missingSlots = [1, 2, 3, 4, 5].filter((slot) => !existingSlots.has(slot));
-
-  if (missingSlots.length > 0) {
-    await createMissingDailyAlbums(date, missingSlots);
-    dailyAlbums = await fetchDailyAlbums(date);
-  }
+  const dailyAlbums = await fetchDailyAlbums(date);
 
   const slots: DailySlot[] = dailyAlbums.map((entry) => ({
     slot: entry.slot,

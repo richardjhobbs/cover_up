@@ -1,11 +1,10 @@
-import Link from 'next/link';
+import AuthForm from '../components/Auth/AuthForm';
 
 export default function HomePage() {
   return (
     <main>
       <h1>Cover Up</h1>
-      <p>Welcome to Cover Up.</p>
-      <Link href="/today">Start Today</Link>
+      <AuthForm />
     </main>
   );
 }

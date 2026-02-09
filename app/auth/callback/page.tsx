@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase/client';
+import { supabaseClient } from '@/lib/supabase/client';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -10,25 +10,11 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const handleCallback = async () => {
-      // This creates the session from the magic link
-      const { data, error } = await supabase.auth.getSession();
+      const { data, error } = await supabaseClient.auth.getSession();
 
       if (error || !data.session) {
         setError('Unable to complete sign-in.');
         return;
-      }
-
-      const session = data.session;
-      const pendingUsername = localStorage.getItem('pending_username');
-
-      if (pendingUsername) {
-        await supabase.from('profiles').upsert({
-          id: session.user.id,
-          email: session.user.email,
-          username: pendingUsername
-        });
-
-        localStorage.removeItem('pending_username');
       }
 
       router.replace('/today');

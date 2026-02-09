@@ -5,40 +5,10 @@ import {
   type DailySlot,
   type DailyTheme,
 } from '../../../lib/daily/selector';
+import { searchReleases } from '../../../lib/musicbrainz';
 import { supabaseServer } from '../../../lib/supabase/server';
 
-const PLACEHOLDER_ALBUMS = [
-  {
-    artist: 'The Beatles',
-    title: 'Abbey Road',
-    year: 1969,
-    country: 'UK',
-  },
-  {
-    artist: 'Nirvana',
-    title: 'Nevermind',
-    year: 1991,
-    country: 'US',
-  },
-  {
-    artist: 'Radiohead',
-    title: 'OK Computer',
-    year: 1997,
-    country: 'UK',
-  },
-  {
-    artist: 'Beyoncé',
-    title: 'Lemonade',
-    year: 2016,
-    country: 'US',
-  },
-  {
-    artist: 'David Bowie',
-    title: '"Heroes"',
-    year: 1977,
-    country: 'UK',
-  },
-];
+const DAILY_RELEASE_QUERIES = ['rock', 'pop', 'hip-hop', 'electronic', 'jazz'];
 
 async function getDailyTheme(date: string) {
   const { data, error } = await supabaseServer
@@ -89,32 +59,55 @@ async function fetchDailyAlbums(date: string) {
 }
 
 async function createDailyAlbums(date: string) {
-  const albumsToInsert = PLACEHOLDER_ALBUMS.map((placeholder) => {
+  const dateValue = new Date(`${date}T00:00:00Z`);
+  const weekdayIndex = dateValue.getUTCDay();
+  const query = DAILY_RELEASE_QUERIES[weekdayIndex % DAILY_RELEASE_QUERIES.length];
+  const offsetSeed = Number(date.replace(/-/g, ''));
+  const offset = offsetSeed % 50;
+
+  const releases = await searchReleases({ query, limit: 5, offset });
+
+  const albumsToUpsert = releases.map((release) => {
+    const releaseDate = typeof release.date === 'string' ? release.date : null;
+    const year = releaseDate ? Number.parseInt(releaseDate.slice(0, 4), 10) : null;
+    const artistName = release['artist-credit']?.[0]?.name ?? 'Unknown Artist';
+
     return {
-      source: 'placeholder',
-      artist: placeholder.artist,
-      title: placeholder.title,
-      year: placeholder.year,
-      country: placeholder.country,
+      source: 'musicbrainz',
+      mbid: release.id,
+      artist: artistName,
+      title: release.title ?? 'Untitled',
+      year: Number.isNaN(year ?? Number.NaN) ? null : year,
+      country: release.country ?? null,
       cover_url: null,
     };
   });
 
-  const { data: insertedAlbums, error: insertError } = await supabaseServer
+  const { data: upsertedAlbums, error: upsertError } = await supabaseServer
     .from('albums')
-    .insert(albumsToInsert)
-    .select('id');
+    .upsert(albumsToUpsert, { onConflict: 'mbid' })
+    .select('id, mbid');
 
-  if (insertError) {
-    throw insertError;
+  if (upsertError) {
+    throw upsertError;
   }
 
-  const dailyAlbumsToInsert = insertedAlbums.map((album, index) => {
+  const albumIdByMbid = new Map(
+    upsertedAlbums.map((album) => [album.mbid, album.id])
+  );
+
+  const dailyAlbumsToInsert = albumsToUpsert.map((album, index) => {
     const slot = index + 1;
+    const albumId = albumIdByMbid.get(album.mbid);
+
+    if (!albumId) {
+      throw new Error(`Missing album id for ${album.mbid ?? 'unknown mbid'}`);
+    }
+
     return {
       date,
       slot,
-      album_id: album.id,
+      album_id: albumId,
       difficulty: slot,
       obscuration: {},
     };
@@ -136,7 +129,6 @@ export async function GET() {
 
   if (!themeRow) {
     themeRow = await createDailyTheme(date);
-    await createDailyAlbums(date);
   }
 
   const theme: DailyTheme = {
@@ -144,7 +136,12 @@ export async function GET() {
     type: themeRow.theme_type,
   };
 
-  const dailyAlbums = await fetchDailyAlbums(date);
+  let dailyAlbums = await fetchDailyAlbums(date);
+
+  if (dailyAlbums.length === 0) {
+    await createDailyAlbums(date);
+    dailyAlbums = await fetchDailyAlbums(date);
+  }
 
   const slots: DailySlot[] = dailyAlbums.map((entry) => ({
     slot: entry.slot,

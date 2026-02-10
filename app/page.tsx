@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import AlbumSlot from '@/components/AlbumSlot';
+import UsernameModal from '@/components/UsernameModal';
 
 type DailySlot = {
   slot: number;
@@ -44,6 +45,19 @@ export default function Home() {
   const [totalScore, setTotalScore] = useState(0);
   const [completedAlbums, setCompletedAlbums] = useState<Set<number>>(new Set());
   const [albumResults, setAlbumResults] = useState<AlbumResult[]>([]);
+  const [username, setUsername] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Check for existing username in localStorage
+  useEffect(() => {
+    const storedUsername = localStorage.getItem('coverup_username');
+    const storedUserId = localStorage.getItem('coverup_user_id');
+    
+    if (storedUsername && storedUserId) {
+      setUsername(storedUsername);
+      setUserId(storedUserId);
+    }
+  }, []);
 
   useEffect(() => {
     async function fetchDaily() {
@@ -103,10 +117,41 @@ export default function Home() {
     }
   }, [completedAlbums, dailyData]);
 
+  const handleUsernameSubmit = async (newUsername: string) => {
+    // Generate anonymous user ID
+    const newUserId = crypto.randomUUID();
+    
+    // Save username to profiles table
+    try {
+      const response = await fetch('/api/save-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          userId: newUserId, 
+          username: newUsername 
+        }),
+      });
+
+      if (response.ok) {
+        localStorage.setItem('coverup_username', newUsername);
+        localStorage.setItem('coverup_user_id', newUserId);
+        setUsername(newUsername);
+        setUserId(newUserId);
+      }
+    } catch (err) {
+      console.error('Error saving profile:', err);
+    }
+  };
+
+  // Show username modal if no username
+  if (!username) {
+    return <UsernameModal onSubmit={handleUsernameSubmit} />;
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-white text-xl">Loading today &apos s albums...</div>
+        <div className="text-white text-xl">Loading today&apos;s albums...</div>
       </div>
     );
   }
@@ -131,6 +176,11 @@ export default function Home() {
         <div className="text-xl text-gray-400">{dailyData.theme.name}</div>
         <div className="text-sm text-gray-500 mt-1">{dailyData.date}</div>
         
+        {/* Username Display */}
+        <div className="text-sm text-gray-400 mt-2">
+          Playing as: <span className="text-blue-400 font-semibold">{username}</span>
+        </div>
+        
         {/* Score Display */}
         <div className="mt-4 text-2xl font-bold text-blue-400">
           Score: {totalScore}
@@ -153,8 +203,8 @@ export default function Home() {
               album={slotData.album}
               isRevealed={completedAlbums.has(slotData.slot)}
               onCorrectGuess={(timeMs, guessText) => 
-  handleCorrectGuess(slotData.slot, timeMs, guessText)
-}
+                handleCorrectGuess(slotData.slot, timeMs, guessText)
+              }
             />
           ))}
         </div>

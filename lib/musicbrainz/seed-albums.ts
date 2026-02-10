@@ -103,12 +103,12 @@ export const SEED_ALBUMS: Record<string, SeedAlbum[]> = {
  // ALT-ROCK - 1989-1999 UK and US sound
   'Alternative Rock': [
     { artist: 'Nirvana', title: 'Nevermind', year: 1991, country: 'US', visualWeight: 2 },
-    { artist: 'Radiohead', title: 'OK Computer', year: 1997, country: 'GB', visualWeight: 8 },
+    { artist: 'Radiohead', title: 'OK Computer', year: 1997, country: 'UK', visualWeight: 8 },
     { artist: 'R.E.M.', title: 'Automatic for the People', year: 1992, country: 'US', visualWeight: 5 },
     { artist: 'The Smashing Pumpkins', title: 'Siamese Dream', year: 1993, country: 'US', visualWeight: 4 },
     { artist: 'Pixies', title: 'Doolittle', year: 1989, country: 'US', visualWeight: 7 },
     { artist: 'Pearl Jam', title: 'Ten', year: 1991, country: 'US', visualWeight: 3 },
-    { artist: 'The Cure', title: 'Disintegration', year: 1989, country: 'GB', visualWeight: 9 },
+    { artist: 'The Cure', title: 'Disintegration', year: 1989, country: 'UK', visualWeight: 9 },
     { artist: 'Red Hot Chili Peppers', title: 'Californication', year: 1999, country: 'US', visualWeight: 4 },
     { artist: 'The White Stripes', title: 'Elephant', year: 2003, country: 'US', visualWeight: 6 },
     { artist: 'Foo Fighters', title: 'The Colour and the Shape', year: 1997, country: 'US', visualWeight: 5 }

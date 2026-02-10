@@ -244,7 +244,7 @@ export default function AlbumSlot({
           {timedOut && !localRevealed && (
             <div className="timeout-overlay">
               <div className="timeout-content">
-                <div className="timeout-text">Time's Up!</div>
+                <div className="timeout-text">Time &pos s Up!</div>
                 <div className="timeout-artist">{album.artist}</div>
                 <div className="timeout-title">{album.title}</div>
               </div>

@@ -8,14 +8,13 @@ import {
 import { supabaseServer } from '../../../lib/supabase/server';
 import { selectDailyAlbums, getWeeklyThemeName } from '../../../lib/musicbrainz/selector';
 
-// FORCE VERCEL TO NEVER CACHE THIS ROUTE
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 async function getDailyTheme(date: string) {
   const { data, error } = await supabaseServer
     .from('daily_themes')
-    [cite_start].select('id, date, theme_name, theme_type') // Included id [cite: 58, 59]
+    .select('id, date, theme_name, theme_type')
     .eq('date', date)
     .maybeSingle();
 
@@ -43,7 +42,7 @@ async function fetchDailyAlbums(date: string) {
     .from('daily_albums')
     .select(
       'slot, difficulty, obscuration, album:albums(id, artist, title, year, country, cover_url, genres)'
-    [cite_start]) // Column names verified against schema [cite: 52-57, 65-68]
+    )
     .eq('date', date)
     .order('slot');
 
@@ -82,7 +81,7 @@ async function createDailyAlbums(date: string) {
     return {
       date,
       slot,
-      [cite_start]album_id: album.id, // Verified as bigint [cite: 22, 23]
+      album_id: album.id,
       difficulty: slot,
       obscuration: {
         type: slot <= 2 ? 'blur' : 'crop',
@@ -113,7 +112,6 @@ export async function GET() {
       await createDailyAlbums(date);
     } catch (error) {
       console.error('Failed to create daily albums:', error);
-      // We don't return 500 here yet so the user can at least see the theme
     }
   }
 
@@ -126,7 +124,6 @@ export async function GET() {
 
   const slots: DailySlot[] = dailyAlbums.map((entry) => {
     const albumData = entry.album as any;
-    // Schema confirms album is an object, but we keep the check for safety
     const data = Array.isArray(albumData) ? albumData[0] : albumData;
 
     return {

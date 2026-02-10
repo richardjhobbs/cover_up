@@ -54,27 +54,26 @@ export default function AlbumSlot({
     : null;
 
   return (
-   <div className="w-full">
-  {/* Force square container using padding-bottom technique */}
-  <div className="relative w-full pb-[100%] bg-gray-900 rounded-lg shadow-lg overflow-hidden">
-    {secureImageUrl ? (
-      <img
-        src={secureImageUrl}
-        alt={isRevealed ? `${album.artist} - ${album.title}` : 'Album cover'}
-        className="absolute top-0 left-0 w-full h-full object-cover"
-        style={getObscurationStyle()}
-      />
-    ) : (
-      <div className="absolute inset-0 flex items-center justify-center bg-gray-800 text-gray-600 text-sm">
-        No Cover
-      </div>
-    )}
+    <div className="flex flex-col">
+      {/* Container with fixed aspect ratio */}
+      <div className="relative w-full pb-[100%] bg-gray-900 rounded-lg shadow-lg overflow-hidden">
+        {secureImageUrl ? (
+          <img
+            src={secureImageUrl}
+            alt={isRevealed ? `${album.artist} - ${album.title}` : 'Album cover'}
+            className="absolute top-0 left-0 w-full h-full object-cover"
+            style={getObscurationStyle()}
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-800 text-gray-600 text-sm">
+            No Cover
+          </div>
+        )}
 
-    {!isRevealed && (
-      <div className="absolute inset-0 bg-black bg-opacity-20 pointer-events-none" />
-    )}
-  </div>
-  {/* rest of the component... */}
+        {!isRevealed && (
+          <div className="absolute inset-0 bg-black bg-opacity-20 pointer-events-none" />
+        )}
+      </div>
 
       {/* Info below */}
       <div className="mt-2 text-center">

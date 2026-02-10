@@ -22,7 +22,7 @@ type AlbumSlotProps = {
   obscuration: Obscuration;
   album: Album;
   isRevealed: boolean;
-  onGuess: () => void;
+  onCorrectGuess: (timeMs: number, guessText: string) => void;
 };
 
 function normalizeForComparison(text: string): string {
@@ -83,7 +83,7 @@ export default function AlbumSlot({
   obscuration,
   album,
   isRevealed,
-  onGuess,
+  onCorrectGuess,
 }: AlbumSlotProps) {
   const [timerStarted, setTimerStarted] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -91,6 +91,7 @@ export default function AlbumSlot({
   const [localRevealed, setLocalRevealed] = useState(false);
   const [showGuessModal, setShowGuessModal] = useState(false);
   const [guessInput, setGuessInput] = useState('');
+  const [timedOut, setTimedOut] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -133,6 +134,14 @@ export default function AlbumSlot({
     }
   }, [showGuessModal]);
 
+  // Timeout after 21 seconds
+  useEffect(() => {
+    if (elapsedTime >= 21000 && !localRevealed) {
+      setTimedOut(true);
+      setTimerStarted(false);
+    }
+  }, [elapsedTime, localRevealed]);
+
   const drawPixelated = () => {
     if (!canvasRef.current || !imageRef.current) return;
 
@@ -163,7 +172,7 @@ export default function AlbumSlot({
   };
 
   const handleClick = () => {
-    if (localRevealed) return;
+    if (localRevealed || timedOut) return;
     
     if (!timerStarted) {
       setTimerStarted(true);
@@ -179,8 +188,8 @@ export default function AlbumSlot({
     if (isCorrect) {
       setLocalRevealed(true);
       setShowGuessModal(false);
+      onCorrectGuess(elapsedTime, guessInput);
       setGuessInput('');
-      onGuess();
     } else {
       setShowGuessModal(false);
       setGuessInput('');
@@ -207,7 +216,13 @@ export default function AlbumSlot({
             </div>
           )}
 
-          {!timerStarted && (
+          {timedOut && !localRevealed && (
+            <div className="timeout-overlay">
+              <div className="timeout-text">Time's Up!</div>
+            </div>
+          )}
+
+          {!timerStarted && !timedOut && (
             <div className="click-overlay">
               <div className="click-text">Click to Start</div>
             </div>
@@ -217,9 +232,10 @@ export default function AlbumSlot({
         <div className="album-info">
           <div className="album-meta">
             Album {slot}
-            {timerStarted && !localRevealed && (
+            {timerStarted && !localRevealed && !timedOut && (
               <span> • {Math.floor(elapsedTime / 1000)}s</span>
             )}
+            {timedOut && <span className="timeout-label"> • Timeout</span>}
           </div>
 
           {localRevealed && (
@@ -244,6 +260,10 @@ export default function AlbumSlot({
             overflow: hidden;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
             cursor: pointer;
+          }
+
+          .album-cover-container:hover {
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
           }
 
           .album-canvas {
@@ -294,6 +314,22 @@ export default function AlbumSlot({
             text-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
           }
 
+          .timeout-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+          }
+
+          .timeout-text {
+            color: #ff6b6b;
+            font-size: 18px;
+            font-weight: 600;
+          }
+
           @keyframes fadeOut {
             0% {
               opacity: 1;
@@ -314,6 +350,10 @@ export default function AlbumSlot({
           .album-meta {
             font-size: 12px;
             color: #999;
+          }
+
+          .timeout-label {
+            color: #ff6b6b;
           }
 
           .album-details {

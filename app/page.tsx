@@ -106,7 +106,7 @@ export default function Home() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-white text-xl">Loading today&aposs albums...</div>
+        <div className="text-white text-xl">Loading today &apos s albums...</div>
       </div>
     );
   }

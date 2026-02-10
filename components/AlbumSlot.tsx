@@ -77,6 +77,18 @@ function levenshteinDistance(a: string, b: string): number {
   return matrix[b.length][a.length];
 }
 
+function getRandomCorrectMessage(): string {
+  const messages = [
+    "Correct!",
+    "Bang on!",
+    "Boom!!!",
+    "Yessss!",
+    "You got it!",
+    "Winner!"
+  ];
+  return messages[Math.floor(Math.random() * messages.length)];
+}
+
 export default function AlbumSlot({
   slot,
   difficulty,
@@ -92,6 +104,8 @@ export default function AlbumSlot({
   const [showGuessModal, setShowGuessModal] = useState(false);
   const [guessInput, setGuessInput] = useState('');
   const [timedOut, setTimedOut] = useState(false);
+  const [correctMessage, setCorrectMessage] = useState('');
+  const [showCorrectMessage, setShowCorrectMessage] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -139,6 +153,7 @@ export default function AlbumSlot({
     if (elapsedTime >= 21000 && !localRevealed) {
       setTimedOut(true);
       setTimerStarted(false);
+      setShowGuessModal(false);
     }
   }, [elapsedTime, localRevealed]);
 
@@ -188,10 +203,14 @@ export default function AlbumSlot({
     if (isCorrect) {
       setLocalRevealed(true);
       setShowGuessModal(false);
+      const message = getRandomCorrectMessage();
+      setCorrectMessage(message);
+      setShowCorrectMessage(true);
+      setTimeout(() => setShowCorrectMessage(false), 2000);
       onCorrectGuess(elapsedTime, guessInput);
       setGuessInput('');
     } else {
-      setShowGuessModal(false);
+      // Don't close modal on wrong guess - just show red X and clear input
       setGuessInput('');
       setShowWrongGuess(true);
       setTimeout(() => setShowWrongGuess(false), 1000);
@@ -216,9 +235,19 @@ export default function AlbumSlot({
             </div>
           )}
 
+          {showCorrectMessage && (
+            <div className="correct-overlay">
+              <div className="correct-message">{correctMessage}</div>
+            </div>
+          )}
+
           {timedOut && !localRevealed && (
             <div className="timeout-overlay">
-              <div className="timeout-text">Time&aposs Up!</div>
+              <div className="timeout-content">
+                <div className="timeout-text">Time's Up!</div>
+                <div className="timeout-artist">{album.artist}</div>
+                <div className="timeout-title">{album.title}</div>
+              </div>
             </div>
           )}
 
@@ -314,20 +343,62 @@ export default function AlbumSlot({
             text-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
           }
 
+          .correct-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(34, 197, 94, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeOut 2s forwards;
+            pointer-events: none;
+          }
+
+          .correct-message {
+            font-size: 48px;
+            color: #22c55e;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(34, 197, 94, 0.8);
+            animation: bounce 0.5s ease;
+          }
+
+          @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+          }
+
           .timeout-overlay {
             position: absolute;
             inset: 0;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
             display: flex;
             align-items: center;
             justify-content: center;
             pointer-events: none;
           }
 
+          .timeout-content {
+            text-align: center;
+            padding: 20px;
+          }
+
           .timeout-text {
             color: #ff6b6b;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 16px;
+          }
+
+          .timeout-artist {
+            color: white;
             font-size: 18px;
             font-weight: 600;
+            margin-bottom: 4px;
+          }
+
+          .timeout-title {
+            color: #999;
+            font-size: 14px;
           }
 
           @keyframes fadeOut {

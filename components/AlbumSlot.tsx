@@ -41,7 +41,7 @@ export default function AlbumSlot({
         return { filter: `grayscale(${intensity}%) blur(2px)` };
       case 'crop':
         return {
-          transform: `scale(${1 + intensity / 10})`,
+          transform: `scale(${1 + intensity / 100})`,
           transformOrigin: 'center center',
         };
       default:

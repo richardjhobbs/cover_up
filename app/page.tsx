@@ -31,7 +31,6 @@ type DailyData = {
 
 export default function Home() {
   const [dailyData, setDailyData] = useState<DailyData | null>(null);
-  const [revealedSlots, setRevealedSlots] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,15 +58,10 @@ export default function Home() {
     fetchDaily();
   }, []);
 
-  const handleGuess = (slot: number) => {
-    // Placeholder: Just reveal the album for now
-    setRevealedSlots((prev) => new Set(prev).add(slot));
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-white text-xl">Loading today&apos;s albums...</div>
+        <div className="text-white text-xl">Loading today's albums...</div>
       </div>
     );
   }
@@ -91,9 +85,9 @@ export default function Home() {
         <div className="text-sm text-gray-500 mt-1">{dailyData.date}</div>
       </div>
 
-      {/* Album Grid */}
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+      {/* Album Grid - THE WALL */}
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
           {dailyData.slots.map((slotData) => (
             <AlbumSlot
               key={slotData.slot}
@@ -101,16 +95,11 @@ export default function Home() {
               difficulty={slotData.difficulty}
               obscuration={slotData.obscuration}
               album={slotData.album}
-              isRevealed={revealedSlots.has(slotData.slot)}
-              onGuess={() => handleGuess(slotData.slot)}
+              isRevealed={false}
+              onGuess={() => console.log(`Clicked slot ${slotData.slot}`)}
             />
           ))}
         </div>
-      </div>
-
-      {/* Stats (placeholder) */}
-      <div className="max-w-7xl mx-auto mt-8 text-center text-gray-500">
-        <div>Revealed: {revealedSlots.size} / {dailyData.slots.length}</div>
       </div>
     </div>
   );

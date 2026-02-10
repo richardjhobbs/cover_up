@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 type Obscuration = {
   type?: 'blur' | 'crop' | 'grayscale';
   intensity?: number;
@@ -42,7 +40,6 @@ export default function AlbumSlot({
       case 'grayscale':
         return { filter: `grayscale(${intensity}%) blur(2px)` };
       case 'crop':
-        // Use a large scale but keep it contained
         return {
           transform: `scale(${1 + intensity / 10})`,
           transformOrigin: 'center center',
@@ -52,64 +49,49 @@ export default function AlbumSlot({
     }
   };
 
-  // Force HTTPS for cover URLs
   const secureImageUrl = album.cover_url
     ? album.cover_url.replace('http://', 'https://')
     : null;
 
   return (
-    <div className="relative w-full max-w-sm mx-auto">
-      {/* TRIPLE-LAYER containment for crop effect */}
-      <div className="relative w-full" style={{ paddingBottom: '100%' }}>
-        <div className="absolute inset-0 bg-gray-900 rounded-lg shadow-lg overflow-hidden">
-          <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute inset-0 overflow-hidden">
-              {secureImageUrl ? (
-                <img
-                  src={secureImageUrl}
-                  alt={isRevealed ? `${album.artist} - ${album.title}` : 'Album cover'}
-                  className="absolute top-0 left-0 w-full h-full object-cover transition-all duration-700 ease-in-out"
-                  style={getObscurationStyle()}
-                />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-800 text-gray-600">
-                  No Cover Art
-                </div>
-              )}
-            </div>
+    <div className="w-full">
+      {/* Container with fixed aspect ratio */}
+      <div className="relative w-full aspect-square bg-gray-900 rounded-lg shadow-lg overflow-hidden">
+        {secureImageUrl ? (
+          <img
+            src={secureImageUrl}
+            alt={isRevealed ? `${album.artist} - ${album.title}` : 'Album cover'}
+            className="absolute inset-0 w-full h-full object-cover"
+            style={getObscurationStyle()}
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-800 text-gray-600 text-sm">
+            No Cover
           </div>
+        )}
 
-          {/* Overlay for unrevealed state */}
-          {!isRevealed && (
-            <div className="absolute inset-0 bg-black bg-opacity-20 pointer-events-none z-10" />
-          )}
-        </div>
+        {!isRevealed && (
+          <div className="absolute inset-0 bg-black bg-opacity-20 pointer-events-none" />
+        )}
       </div>
 
-      {/* Slot Info */}
-      <div className="mt-3 text-center">
-        <div className="text-sm text-gray-500 mb-1">
+      {/* Info below */}
+      <div className="mt-2 text-center">
+        <div className="text-xs text-gray-500">
           Album {slot} · Difficulty {difficulty}
         </div>
 
         {isRevealed ? (
-          <div className="space-y-1">
-            <div className="font-bold text-lg">{album.artist}</div>
-            <div className="text-gray-300">{album.title}</div>
-            {album.year && (
-              <div className="text-sm text-gray-500">
-                {album.year}
-                {album.country && ` · ${album.country}`}
-              </div>
-            )}
+          <div className="mt-1">
+            <div className="font-semibold text-sm">{album.artist}</div>
+            <div className="text-xs text-gray-400">{album.title}</div>
           </div>
         ) : (
           <button
             onClick={onGuess}
-            className="mt-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled
+            className="mt-2 px-4 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
           >
-            Locked
+            Guess
           </button>
         )}
       </div>

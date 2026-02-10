@@ -92,23 +92,27 @@ export default function ActiveStage({
           </div>
         </div>
 
-        {/* Album Cover - Large */}
-        <div className="aspect-square w-full max-w-lg mx-auto mb-6 bg-gray-900 rounded-lg shadow-2xl overflow-hidden">
-          <div className="relative w-full h-full overflow-hidden">
-            {secureImageUrl ? (
-              <img
-                src={secureImageUrl}
-                alt="Album cover"
-                className="absolute inset-0 w-full h-full object-cover transition-all duration-700"
-                style={getObscurationStyle()}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-800 text-gray-600">
-                No Cover Art
-              </div>
-            )}
+     {/* Album Cover - Large */}
+<div className="relative w-full max-w-lg mx-auto mb-6" style={{ paddingBottom: '100%' }}>
+  <div className="absolute inset-0 bg-gray-900 rounded-lg shadow-2xl overflow-hidden">
+    <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden">
+        {secureImageUrl ? (
+          <img
+            src={secureImageUrl}
+            alt="Album cover"
+            className="absolute top-0 left-0 w-full h-full object-cover transition-all duration-700"
+            style={getObscurationStyle()}
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-800 text-gray-600">
+            No Cover Art
           </div>
-        </div>
+        )}
+      </div>
+    </div>
+  </div>
+</div>
 
         {/* Guess Input */}
         <form onSubmit={handleSubmit} className="mb-4">

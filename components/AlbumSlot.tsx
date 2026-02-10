@@ -59,28 +59,31 @@ export default function AlbumSlot({
 
   return (
     <div className="relative w-full max-w-sm mx-auto">
-      {/* Fixed Aspect Ratio Container - CRITICAL for containing the crop */}
-      <div className="relative w-full aspect-square bg-gray-900 rounded-lg shadow-lg overflow-hidden">
-        {/* Inner wrapper for transform isolation */}
-        <div className="absolute inset-0 overflow-hidden">
-          {secureImageUrl ? (
-            <img
-              src={secureImageUrl}
-              alt={isRevealed ? `${album.artist} - ${album.title}` : 'Album cover'}
-              className="absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out"
-              style={getObscurationStyle()}
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-800 text-gray-600">
-              No Cover Art
+      {/* TRIPLE-LAYER containment for crop effect */}
+      <div className="relative w-full" style={{ paddingBottom: '100%' }}>
+        <div className="absolute inset-0 bg-gray-900 rounded-lg shadow-lg overflow-hidden">
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute inset-0 overflow-hidden">
+              {secureImageUrl ? (
+                <img
+                  src={secureImageUrl}
+                  alt={isRevealed ? `${album.artist} - ${album.title}` : 'Album cover'}
+                  className="absolute top-0 left-0 w-full h-full object-cover transition-all duration-700 ease-in-out"
+                  style={getObscurationStyle()}
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-800 text-gray-600">
+                  No Cover Art
+                </div>
+              )}
             </div>
+          </div>
+
+          {/* Overlay for unrevealed state */}
+          {!isRevealed && (
+            <div className="absolute inset-0 bg-black bg-opacity-20 pointer-events-none z-10" />
           )}
         </div>
-
-        {/* Overlay for unrevealed state */}
-        {!isRevealed && (
-          <div className="absolute inset-0 bg-black bg-opacity-20 pointer-events-none" />
-        )}
       </div>
 
       {/* Slot Info */}

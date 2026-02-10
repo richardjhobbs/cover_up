@@ -36,6 +36,7 @@ type AlbumResult = {
   timeMs: number;
   guessText: string;
   isCorrect: boolean;
+  albumId: number;
 };
 
 export default function Home() {
@@ -47,6 +48,8 @@ export default function Home() {
   const [albumResults, setAlbumResults] = useState<AlbumResult[]>([]);
   const [username, setUsername] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [gameComplete, setGameComplete] = useState(false);
+  const [scoreSaved, setScoreSaved] = useState(false);
 
   // Check for existing username in localStorage
   useEffect(() => {
@@ -92,16 +95,16 @@ export default function Home() {
     return 0; // Timeout
   };
 
-  const handleCorrectGuess = (slot: number, timeMs: number, guessText: string) => {
+  const handleCorrectGuess = (slot: number, timeMs: number, guessText: string, albumId: number) => {
     const score = calculateScore(timeMs);
     
-    // Add to results
     const result: AlbumResult = {
       slot,
       score,
       timeMs,
       guessText,
       isCorrect: true,
+      albumId,
     };
     
     setAlbumResults(prev => [...prev, result]);
@@ -116,6 +119,53 @@ export default function Home() {
       setTotalScore(prev => prev + 250);
     }
   }, [completedAlbums, dailyData]);
+
+  // Save score when game is complete
+  useEffect(() => {
+    const saveScore = async () => {
+      if (!dailyData || !userId || scoreSaved || gameComplete) return;
+      
+      // Check if game is complete (all 5 albums completed)
+      if (completedAlbums.size === 5) {
+        setGameComplete(true);
+        
+        console.log('Game complete, saving score...');
+        
+        const resultsToSave = albumResults.map(r => ({
+          slot: r.slot,
+          album_id: r.albumId,
+          score: r.score,
+          time_ms: r.timeMs,
+          guess_text: r.guessText,
+          result_type: r.isCorrect ? 'correct' : 'timeout',
+        }));
+        
+        try {
+          const response = await fetch('/api/save-score', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId,
+              date: dailyData.date,
+              totalScore,
+              albumResults: resultsToSave,
+            }),
+          });
+          
+          if (response.ok) {
+            setScoreSaved(true);
+            console.log('Score saved successfully!');
+          } else {
+            console.error('Failed to save score');
+          }
+        } catch (error) {
+          console.error('Error saving score:', error);
+        }
+      }
+    };
+    
+    saveScore();
+  }, [completedAlbums, albumResults, dailyData, userId, totalScore, scoreSaved, gameComplete]);
 
   const handleUsernameSubmit = async (newUsername: string) => {
     // Generate anonymous user ID
@@ -189,6 +239,12 @@ export default function Home() {
         <div className="text-sm text-gray-500 mt-1">
           {completedAlbums.size} / 5 albums completed
         </div>
+        
+        {scoreSaved && (
+          <div className="text-sm text-green-400 mt-2">
+            ✓ Score saved to leaderboard!
+          </div>
+        )}
       </div>
 
       {/* Album Grid */}
@@ -203,7 +259,7 @@ export default function Home() {
               album={slotData.album}
               isRevealed={completedAlbums.has(slotData.slot)}
               onCorrectGuess={(timeMs, guessText) => 
-                handleCorrectGuess(slotData.slot, timeMs, guessText)
+                handleCorrectGuess(slotData.slot, timeMs, guessText, slotData.album.id)
               }
             />
           ))}

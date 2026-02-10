@@ -102,24 +102,26 @@ export default function Home() {
         </div>
 
         <style jsx>{`
-          .albums-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-          }
+  .albums-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
 
-          @media (min-width: 640px) {
-            .albums-grid {
-              grid-template-columns: repeat(3, 1fr);
-            }
-          }
+  @media (min-width: 640px) {
+    .albums-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
 
-          @media (min-width: 1024px) {
-            .albums-grid {
-              grid-template-columns: repeat(5, 1fr);
-            }
-          }
-        `}</style>
+  @media (min-width: 1024px) {
+    .albums-grid {
+      grid-template-columns: repeat(5, 1fr);
+    }
+  }
+`}</style>
       </div>
     </div>
   );

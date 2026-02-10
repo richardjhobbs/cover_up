@@ -59,13 +59,11 @@ const getObscurationStyle = (): React.CSSProperties => {
       <div className="relative w-full h-full bg-gray-900 rounded-lg overflow-hidden shadow-lg">
         {album.cover_url ? (
           <img
-            src={album.cover_url}
-            alt={isRevealed ? `${album.artist} - ${album.title}` : 'Album cover'}
-            className="w-full h-full object-cover transition-all duration-500"
-            style={{
-              filter: getObscurationStyle(),
-            }}
-          />
+  src={album.cover_url}
+  alt={isRevealed ? `${album.artist} - ${album.title}` : 'Album cover'}
+  className="w-full h-full object-cover transition-all duration-700 ease-in-out"
+  style={getObscurationStyle()}
+/>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gray-800 text-gray-600">
             No Cover Art

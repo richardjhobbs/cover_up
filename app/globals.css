@@ -1,0 +1,42 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 2rem;
+  background: #0b0b0b;
+  color: #f2f2f2;
+}
+
+a {
+  color: inherit;
+}
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr); /* Mobile: 1 column */
+  gap: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+@media (min-width: 768px) {
+  .game-grid {
+    grid-template-columns: repeat(5, 1fr); /* Desktop: 5 columns in a row */
+  }
+}
+
+.album-slot {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: #1a1a1a;
+  border-radius: 12px;
+  border: 2px solid #333;
+  transition: transform 0.2s ease;
+}
+
+.album-slot:hover {
+  transform: scale(1.02);
+}

@@ -54,47 +54,121 @@ export default function AlbumSlot({
     : null;
 
   return (
-    <div className="flex flex-col">
-      {/* Container with fixed aspect ratio */}
-      <div className="relative w-full pb-[100%] bg-gray-900 rounded-lg shadow-lg overflow-hidden">
+    <div className="album-slot">
+      <div className="album-cover-container">
         {secureImageUrl ? (
           <img
             src={secureImageUrl}
             alt={isRevealed ? `${album.artist} - ${album.title}` : 'Album cover'}
-            className="absolute top-0 left-0 w-full h-full object-cover"
+            className="album-cover-image"
             style={getObscurationStyle()}
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-800 text-gray-600 text-sm">
-            No Cover
-          </div>
+          <div className="album-cover-placeholder">No Cover</div>
         )}
-
-        {!isRevealed && (
-          <div className="absolute inset-0 bg-black bg-opacity-20 pointer-events-none" />
-        )}
+        {!isRevealed && <div className="album-cover-overlay" />}
       </div>
 
-      {/* Info below */}
-      <div className="mt-2 text-center">
-        <div className="text-xs text-gray-500">
+      <div className="album-info">
+        <div className="album-meta">
           Album {slot} · Difficulty {difficulty}
         </div>
 
         {isRevealed ? (
-          <div className="mt-1">
-            <div className="font-semibold text-sm">{album.artist}</div>
-            <div className="text-xs text-gray-400">{album.title}</div>
+          <div className="album-details">
+            <div className="album-artist">{album.artist}</div>
+            <div className="album-title">{album.title}</div>
           </div>
         ) : (
-          <button
-            onClick={onGuess}
-            className="mt-2 px-4 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
-          >
+          <button onClick={onGuess} className="album-guess-button">
             Guess
           </button>
         )}
       </div>
+
+      <style jsx>{`
+        .album-slot {
+          width: 100%;
+        }
+
+        .album-cover-container {
+          position: relative;
+          width: 100%;
+          padding-bottom: 100%;
+          background: #1a1a1a;
+          border-radius: 8px;
+          overflow: hidden;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .album-cover-image {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .album-cover-placeholder {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #2d2d2d;
+          color: #666;
+          font-size: 14px;
+        }
+
+        .album-cover-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.2);
+          pointer-events: none;
+        }
+
+        .album-info {
+          margin-top: 8px;
+          text-align: center;
+        }
+
+        .album-meta {
+          font-size: 12px;
+          color: #999;
+        }
+
+        .album-details {
+          margin-top: 4px;
+        }
+
+        .album-artist {
+          font-weight: 600;
+          font-size: 14px;
+          color: white;
+        }
+
+        .album-title {
+          font-size: 12px;
+          color: #999;
+        }
+
+        .album-guess-button {
+          margin-top: 8px;
+          padding: 4px 16px;
+          font-size: 14px;
+          background: #2563eb;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+
+        .album-guess-button:hover {
+          background: #1d4ed8;
+        }
+      `}</style>
     </div>
   );
 }

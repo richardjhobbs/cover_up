@@ -85,22 +85,42 @@ export default function Home() {
         <div className="text-sm text-gray-500 mt-1">{dailyData.date}</div>
       </div>
 
-    {/* Album Grid - THE WALL */}
-<div className="max-w-7xl mx-auto px-4">
-  <div className="grid grid-cols-5 gap-4 w-full">
-    {dailyData.slots.map((slotData) => (
-      <AlbumSlot
-        key={slotData.slot}
-        slot={slotData.slot}
-        difficulty={slotData.difficulty}
-        obscuration={slotData.obscuration}
-        album={slotData.album}
-        isRevealed={false}
-        onGuess={() => console.log(`Clicked slot ${slotData.slot}`)}
-      />
-    ))}
-  </div>
-</div>S
+    {/* Album Grid */}
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="albums-grid">
+          {dailyData.slots.map((slotData) => (
+            <AlbumSlot
+              key={slotData.slot}
+              slot={slotData.slot}
+              difficulty={slotData.difficulty}
+              obscuration={slotData.obscuration}
+              album={slotData.album}
+              isRevealed={false}
+              onGuess={() => console.log(`Clicked slot ${slotData.slot}`)}
+            />
+          ))}
+        </div>
+
+        <style jsx>{`
+          .albums-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+          }
+
+          @media (min-width: 640px) {
+            .albums-grid {
+              grid-template-columns: repeat(3, 1fr);
+            }
+          }
+
+          @media (min-width: 1024px) {
+            .albums-grid {
+              grid-template-columns: repeat(5, 1fr);
+            }
+          }
+        `}</style>
+      </div>
     </div>
   );
 }

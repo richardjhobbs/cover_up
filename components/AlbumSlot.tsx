@@ -29,25 +29,22 @@ function normalizeForComparison(text: string): string {
   return text
     .toLowerCase()
     .trim()
-    .replace(/^the\s+/i, '') // Remove leading "The"
-    .replace(/^a\s+/i, '')   // Remove leading "A"
-    .replace(/[^a-z0-9\s]/g, '') // Remove special characters
-    .replace(/\s+/g, ' '); // Normalize whitespace
+    .replace(/^the\s+/i, '')
+    .replace(/^a\s+/i, '')
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, ' ');
 }
 
 function fuzzyMatch(guess: string, actual: string): boolean {
   const normalizedGuess = normalizeForComparison(guess);
   const normalizedActual = normalizeForComparison(actual);
   
-  // Exact match after normalization
   if (normalizedGuess === normalizedActual) return true;
   
-  // Check if guess is contained in actual (for partial matches)
   if (normalizedActual.includes(normalizedGuess) && normalizedGuess.length > 3) return true;
   
-  // Levenshtein distance for typos (allow 1-2 character difference)
   const distance = levenshteinDistance(normalizedGuess, normalizedActual);
-  const tolerance = Math.max(1, Math.floor(normalizedActual.length * 0.15)); // 15% tolerance
+  const tolerance = Math.max(1, Math.floor(normalizedActual.length * 0.15));
   
   return distance <= tolerance;
 }
@@ -98,7 +95,6 @@ export default function AlbumSlot({
   const imageRef = useRef<HTMLImageElement | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Load image
   useEffect(() => {
     if (!album.cover_url) return;
 
@@ -111,7 +107,6 @@ export default function AlbumSlot({
     img.src = album.cover_url.replace('http://', 'https://');
   }, [album.cover_url]);
 
-  // Timer logic
   useEffect(() => {
     if (!timerStarted || localRevealed) return;
 
@@ -128,12 +123,10 @@ export default function AlbumSlot({
     return () => clearInterval(interval);
   }, [timerStarted, localRevealed]);
 
-  // Redraw when time changes
   useEffect(() => {
     drawPixelated();
   }, [elapsedTime, localRevealed]);
 
-  // Focus input when modal opens
   useEffect(() => {
     if (showGuessModal && inputRef.current) {
       inputRef.current.focus();
@@ -151,17 +144,17 @@ export default function AlbumSlot({
     canvas.width = size;
     canvas.height = size;
 
-    let pixelSize = 10;
+    let pixelSize = 20;
     if (localRevealed || elapsedTime >= 21000) {
       ctx.imageSmoothingEnabled = true;
       ctx.drawImage(imageRef.current, 0, 0, size, size);
       return;
     } else if (elapsedTime >= 14000) {
-      pixelSize = 50;
+      pixelSize = 60;
     } else if (elapsedTime >= 7000) {
-      pixelSize = 25;
+      pixelSize = 35;
     } else {
-      pixelSize = 10;
+      pixelSize = 20;
     }
 
     ctx.imageSmoothingEnabled = false;
@@ -170,13 +163,14 @@ export default function AlbumSlot({
   };
 
   const handleClick = () => {
+    if (localRevealed) return;
+    
     if (!timerStarted) {
       setTimerStarted(true);
+      setTimeout(() => setShowGuessModal(true), 100);
+    } else {
+      setShowGuessModal(true);
     }
-  };
-
-  const handleGuessClick = () => {
-    setShowGuessModal(true);
   };
 
   const handleSubmitGuess = () => {
@@ -228,17 +222,11 @@ export default function AlbumSlot({
             )}
           </div>
 
-          {localRevealed ? (
+          {localRevealed && (
             <div className="album-details">
               <div className="album-artist">{album.artist}</div>
               <div className="album-title">{album.title}</div>
             </div>
-          ) : (
-            timerStarted && (
-              <button onClick={handleGuessClick} className="album-guess-button">
-                Guess
-              </button>
-            )
           )}
         </div>
 
@@ -342,27 +330,11 @@ export default function AlbumSlot({
             font-size: 12px;
             color: #999;
           }
-
-          .album-guess-button {
-            margin-top: 8px;
-            padding: 4px 16px;
-            font-size: 14px;
-            background: #2563eb;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background 0.2s;
-          }
-
-          .album-guess-button:hover {
-            background: #1d4ed8;
-          }
         `}</style>
       </div>
 
       {showGuessModal && (
-        <div className="modal-overlay" onClick={() => setShowGuessModal(false)}>
+        <div className="modal-container">
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h2 className="modal-title">Who is this?</h2>
             <input
@@ -391,23 +363,21 @@ export default function AlbumSlot({
           </div>
 
           <style jsx>{`
-            .modal-overlay {
+            .modal-container {
               position: fixed;
-              inset: 0;
-              background: rgba(0, 0, 0, 0.8);
-              display: flex;
-              align-items: center;
-              justify-content: center;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
               z-index: 1000;
             }
 
             .modal-content {
               background: #1a1a1a;
+              border: 2px solid #2563eb;
               border-radius: 12px;
               padding: 32px;
-              max-width: 400px;
-              width: 90%;
-              box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+              width: 400px;
+              box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
             }
 
             .modal-title {

@@ -79,7 +79,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-950 text-white py-8 px-4">
       {/* Header */}
-      <div className="max-w-7xl mx-auto mb-8 text-center">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         <h1 className="text-4xl font-bold mb-2">Cover Up</h1>
         <div className="text-xl text-gray-400">{dailyData.theme.name}</div>
         <div className="text-sm text-gray-500 mt-1">{dailyData.date}</div>

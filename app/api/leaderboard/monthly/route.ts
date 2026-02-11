@@ -6,18 +6,20 @@ export const revalidate = 0;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const weekStart = searchParams.get('week_start');
+  const monthStart = searchParams.get('month_start');
   
-  if (!weekStart) {
-    return NextResponse.json({ error: 'week_start parameter required' }, { status: 400 });
+  if (!monthStart) {
+    return NextResponse.json({ error: 'month_start parameter required' }, { status: 400 });
   }
 
   try {
-    const startDate = new Date(weekStart);
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + 6);
+    const startDate = new Date(monthStart);
+    const year = startDate.getUTCFullYear();
+    const month = startDate.getUTCMonth();
     
-    const weekEnd = endDate.toISOString().split('T')[0];
+    const nextMonth = new Date(Date.UTC(year, month + 1, 1));
+    const lastDay = new Date(nextMonth.getTime() - 1);
+    const monthEnd = lastDay.toISOString().split('T')[0];
 
     const { data, error } = await supabaseServer
       .from('plays')
@@ -27,8 +29,8 @@ export async function GET(request: Request) {
         date,
         profiles(username)
       `)
-      .gte('date', weekStart)
-      .lte('date', weekEnd)
+      .gte('date', monthStart)
+      .lte('date', monthEnd)
       .order('total_score', { ascending: false });
 
     if (error) throw error;
@@ -63,14 +65,14 @@ export async function GET(request: Request) {
       .slice(0, 100);
 
     return NextResponse.json({ 
-      week_start: weekStart,
-      week_end: weekEnd,
+      month_start: monthStart,
+      month_end: monthEnd,
       leaderboard 
     });
   } catch (error) {
-    console.error('Weekly leaderboard error:', error);
+    console.error('Monthly leaderboard error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch weekly leaderboard', details: String(error) },
+      { error: 'Failed to fetch monthly leaderboard', details: String(error) },
       { status: 500 }
     );
   }

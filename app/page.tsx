@@ -39,19 +39,42 @@ type AlbumResult = {
   albumId: number;
 };
 
+type LeaderboardEntry = {
+  rank: number;
+  username: string;
+  score?: number;
+  total_score?: number;
+  completed_at?: string;
+  days_played?: number;
+};
+
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const day = date.getUTCDate();
+  const suffix = day === 1 || day === 21 || day === 31 ? 'st' : day === 2 || day === 22 ? 'nd' : day === 3 || day === 23 ? 'rd' : 'th';
+  return `${months[date.getUTCMonth()]} ${day}${suffix}`;
+}
+
 export default function Home() {
   const [dailyData, setDailyData] = useState<DailyData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalScore, setTotalScore] = useState(0);
+  const [displayScore, setDisplayScore] = useState(0);
   const [completedAlbums, setCompletedAlbums] = useState<Set<number>>(new Set());
   const [albumResults, setAlbumResults] = useState<AlbumResult[]>([]);
   const [username, setUsername] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [gameComplete, setGameComplete] = useState(false);
   const [scoreSaved, setScoreSaved] = useState(false);
+  const [dailyLeaderboard, setDailyLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [weeklyLeaderboard, setWeeklyLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [monthlyLeaderboard, setMonthlyLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [highlightedAlbum, setHighlightedAlbum] = useState<number | null>(null);
+  const [isFlashing, setIsFlashing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Check for existing username in localStorage
   useEffect(() => {
     const storedUsername = localStorage.getItem('coverup_username');
     const storedUserId = localStorage.getItem('coverup_user_id');
@@ -86,13 +109,92 @@ export default function Home() {
     fetchDaily();
   }, []);
 
+  useEffect(() => {
+    if (dailyData) {
+      fetchAllLeaderboards();
+    }
+  }, [dailyData]);
+
+  const fetchAllLeaderboards = async () => {
+    if (!dailyData) return;
+    
+    try {
+      const dailyRes = await fetch(`/api/leaderboard/daily?date=${dailyData.date}`);
+      const dailyData2 = await dailyRes.json();
+      setDailyLeaderboard(dailyData2.leaderboard || []);
+
+      const date = new Date(dailyData.date);
+      const dayOfWeek = date.getUTCDay();
+      const diff = date.getUTCDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+      const monday = new Date(date.setUTCDate(diff));
+      const weekStart = monday.toISOString().split('T')[0];
+      
+      const weeklyRes = await fetch(`/api/leaderboard/weekly?week_start=${weekStart}`);
+      const weeklyData2 = await weeklyRes.json();
+      setWeeklyLeaderboard(weeklyData2.leaderboard || []);
+
+      const date2 = new Date(dailyData.date);
+      const monthStart = `${date2.getUTCFullYear()}-${String(date2.getUTCMonth() + 1).padStart(2, '0')}-01`;
+      
+      const monthlyRes = await fetch(`/api/leaderboard/monthly?month_start=${monthStart}`);
+      const monthlyData2 = await monthlyRes.json();
+      setMonthlyLeaderboard(monthlyData2.leaderboard || []);
+    } catch (error) {
+      console.error('Error fetching leaderboards:', error);
+    }
+  };
+
+  // Animated score counter
+  useEffect(() => {
+    if (totalScore === displayScore) return;
+    
+    const duration = 2000;
+    const steps = 60;
+    const increment = (totalScore - displayScore) / steps;
+    const stepTime = duration / steps;
+    
+    let current = displayScore;
+    const interval = setInterval(() => {
+      current += increment;
+      if ((increment > 0 && current >= totalScore) || (increment < 0 && current <= totalScore)) {
+        setDisplayScore(totalScore);
+        clearInterval(interval);
+        
+        if (completedAlbums.size === 5) {
+          setIsFlashing(true);
+          setTimeout(() => setIsFlashing(false), 2000);
+        }
+      } else {
+        setDisplayScore(Math.round(current));
+      }
+    }, stepTime);
+    
+    return () => clearInterval(interval);
+  }, [totalScore, completedAlbums.size]);
+
+  // Keyboard handler for Enter key
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && highlightedAlbum !== null && dailyData) {
+        const albumElement = document.querySelector(`[data-slot="${highlightedAlbum}"]`);
+        if (albumElement) {
+          (albumElement as HTMLElement).click();
+          setHighlightedAlbum(null);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [highlightedAlbum, dailyData]);
+
   const calculateScore = (timeMs: number): number => {
     const seconds = timeMs / 1000;
     
     if (seconds <= 7) return 200;
     if (seconds <= 14) return 120;
     if (seconds <= 21) return 50;
-    return 0; // Timeout
+    return 0;
   };
 
   const handleCorrectGuess = (slot: number, timeMs: number, guessText: string, albumId: number) => {
@@ -110,68 +212,77 @@ export default function Home() {
     setAlbumResults(prev => [...prev, result]);
     setCompletedAlbums(prev => new Set([...prev, slot]));
     setTotalScore(prev => prev + score);
+    
+    if (slot < 5) {
+      setTimeout(() => {
+        setHighlightedAlbum(slot + 1);
+      }, 2000);
+    }
   };
 
-  // Check for completion bonus
+  // Add completion bonus
   useEffect(() => {
-    if (dailyData && completedAlbums.size === 5) {
-      // All albums completed - add 250 bonus
+    if (dailyData && completedAlbums.size === 5 && !gameComplete) {
       setTotalScore(prev => prev + 250);
+      setGameComplete(true);
     }
-  }, [completedAlbums, dailyData]);
+  }, [completedAlbums, dailyData, gameComplete]);
 
-  // Save score when game is complete
+  // FIXED: Save only when albums completed, not on score changes
   useEffect(() => {
     const saveScore = async () => {
-      if (!dailyData || !userId || scoreSaved || gameComplete) return;
+      if (!dailyData || !userId || completedAlbums.size === 0 || isSaving) return;
       
-      // Check if game is complete (all 5 albums completed)
+      // Don't re-save if already saved final score
+      if (completedAlbums.size === 5 && scoreSaved) return;
+      
+      setIsSaving(true);
+      
+      // Calculate score from results + bonus
+      let currentScore = albumResults.reduce((sum, r) => sum + r.score, 0);
       if (completedAlbums.size === 5) {
-        setGameComplete(true);
+        currentScore += 250;
+      }
+      
+      const resultsToSave = albumResults.map(r => ({
+        slot: r.slot,
+        album_id: r.albumId,
+        score: r.score,
+        time_ms: r.timeMs,
+        guess_text: r.guessText,
+        result_type: r.isCorrect ? 'correct' : 'timeout',
+      }));
+      
+      try {
+        const response = await fetch('/api/save-score', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            date: dailyData.date,
+            totalScore: currentScore,
+            albumResults: resultsToSave,
+          }),
+        });
         
-        console.log('Game complete, saving score...');
-        
-        const resultsToSave = albumResults.map(r => ({
-          slot: r.slot,
-          album_id: r.albumId,
-          score: r.score,
-          time_ms: r.timeMs,
-          guess_text: r.guessText,
-          result_type: r.isCorrect ? 'correct' : 'timeout',
-        }));
-        
-        try {
-          const response = await fetch('/api/save-score', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId,
-              date: dailyData.date,
-              totalScore,
-              albumResults: resultsToSave,
-            }),
-          });
-          
-          if (response.ok) {
+        if (response.ok) {
+          if (completedAlbums.size === 5) {
             setScoreSaved(true);
-            console.log('Score saved successfully!');
-          } else {
-            console.error('Failed to save score');
           }
-        } catch (error) {
-          console.error('Error saving score:', error);
         }
+      } catch (error) {
+        console.error('Error saving score:', error);
+      } finally {
+        setTimeout(() => setIsSaving(false), 1000);
       }
     };
     
     saveScore();
-  }, [completedAlbums, albumResults, dailyData, userId, totalScore, scoreSaved, gameComplete]);
+  }, [completedAlbums.size, dailyData, userId, albumResults, scoreSaved, isSaving]);
 
   const handleUsernameSubmit = async (newUsername: string) => {
-    // Generate anonymous user ID
     const newUserId = crypto.randomUUID();
     
-    // Save username to profiles table
     try {
       const response = await fetch('/api/save-profile', {
         method: 'POST',
@@ -193,23 +304,26 @@ export default function Home() {
     }
   };
 
-  // Show username modal if no username
+  const handleRefreshLeaderboards = () => {
+    fetchAllLeaderboards();
+  };
+
   if (!username) {
     return <UsernameModal onSubmit={handleUsernameSubmit} />;
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-white text-xl">Loading today&apos;s albums...</div>
+      <div className="page-container loading-state">
+        <div className="loading-text">Loading today&apos;s albums...</div>
       </div>
     );
   }
 
   if (error || !dailyData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-red-500 text-xl">
+      <div className="page-container error-state">
+        <div className="error-text">
           Error: {error || 'No data available'}
         </div>
       </div>
@@ -218,75 +332,93 @@ export default function Home() {
 
   const allComplete = completedAlbums.size === 5;
 
-  return (
-    <div className="min-h-screen bg-gray-950 text-white py-8 px-4">
-      {/* Header */}
-      <div className="max-w-7xl mx-auto mb-8 text-center">
-        <h1 className="text-4xl font-bold mb-2">Cover Up</h1>
-        <div className="text-xl text-gray-400">{dailyData.theme.name}</div>
-        <div className="text-sm text-gray-500 mt-1">{dailyData.date}</div>
-        
-        {/* Username Display */}
-        <div className="text-sm text-gray-400 mt-2">
-          Playing as: <span className="text-blue-400 font-semibold">{username}</span>
-        </div>
-        
-        {/* Score Display */}
-        <div className="mt-4 text-2xl font-bold text-blue-400">
-          Score: {totalScore}
-          {allComplete && <span className="text-green-400 ml-2">🎉 Complete!</span>}
-        </div>
-        <div className="text-sm text-gray-500 mt-1">
-          {completedAlbums.size} / 5 albums completed
-        </div>
-        
-        {scoreSaved && (
-          <div className="text-sm text-green-400 mt-2">
-            ✓ Score saved to leaderboard!
+  const renderLeaderboard = (leaderboard: LeaderboardEntry[], title: string) => {
+    const top10 = leaderboard.slice(0, 10);
+    const userEntry = leaderboard.find(e => e.username === username);
+    const userInTop10 = userEntry && userEntry.rank <= 10;
+    const displayScore = (entry: LeaderboardEntry) => entry.score || entry.total_score || 0;
+
+    return (
+      <div className="crate">
+        <div className="crate-divider">{title}</div>
+        {leaderboard.length === 0 ? (
+          <div className="no-scores">No scores yet</div>
+        ) : (
+          <div className="crate-sleeves">
+            {top10.map((entry) => (
+              <div
+                key={entry.rank}
+                className={`sleeve ${entry.username === username ? 'you' : ''}`}
+              >
+                <span className="sleeve-name">{entry.username.toUpperCase()}</span>
+                <span className="sleeve-score">{displayScore(entry).toLocaleString()}</span>
+              </div>
+            ))}
+            {!userInTop10 && userEntry && (
+              <>
+                <div className="sleeve-separator"></div>
+                <div className="sleeve you">
+                  <span className="sleeve-name">YOU ARE #{userEntry.rank}</span>
+                  <span className="sleeve-score">{displayScore(userEntry).toLocaleString()}</span>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
+    );
+  };
 
-      {/* Album Grid */}
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="albums-grid">
-          {dailyData.slots.map((slotData) => (
-            <AlbumSlot
-              key={slotData.slot}
-              slot={slotData.slot}
-              difficulty={slotData.difficulty}
-              obscuration={slotData.obscuration}
-              album={slotData.album}
-              isRevealed={completedAlbums.has(slotData.slot)}
-              onCorrectGuess={(timeMs, guessText) => 
-                handleCorrectGuess(slotData.slot, timeMs, guessText, slotData.album.id)
-              }
-            />
-          ))}
+  return (
+    <>
+      <div className="page-container">
+        <div className="content-wrapper">
+          <header className="header">
+            <h1 className="title">COVER UP</h1>
+            <div className="genre-label">Today&apos;s Genre is {dailyData.theme.name}</div>
+            <div className="date-label">{formatDate(dailyData.date)}</div>
+            <div className="greeting">Good Luck <span>{username}</span>!</div>
+          </header>
+
+          <div className="shelf-section">
+            <div className="shelf">
+              {dailyData.slots.map((slotData) => (
+                <AlbumSlot
+                  key={slotData.slot}
+                  slot={slotData.slot}
+                  difficulty={slotData.difficulty}
+                  obscuration={slotData.obscuration}
+                  album={slotData.album}
+                  isRevealed={completedAlbums.has(slotData.slot)}
+                  isHighlighted={highlightedAlbum === slotData.slot}
+                  onCorrectGuess={(timeMs, guessText) => 
+                    handleCorrectGuess(slotData.slot, timeMs, guessText, slotData.album.id)
+                  }
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className={`chalkboard ${isFlashing ? 'flash' : ''}`}>
+            <div className="chalk-label">SCORE</div>
+            <div className="chalk-number">{displayScore.toLocaleString()}</div>
+            {allComplete && (
+              <div className="complete-section">
+                <div className="complete-text">Complete!</div>
+                <button onClick={handleRefreshLeaderboards} className="refresh-btn">
+                  See Where You Stand
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="crates-section">
+            {renderLeaderboard(dailyLeaderboard, 'Daily')}
+            {renderLeaderboard(weeklyLeaderboard, 'Weekly')}
+            {renderLeaderboard(monthlyLeaderboard, 'Monthly')}
+          </div>
         </div>
-
-        <style jsx>{`
-          .albums-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-            max-width: 1200px;
-            margin: 0 auto;
-          }
-
-          @media (min-width: 640px) {
-            .albums-grid {
-              grid-template-columns: repeat(3, 1fr);
-            }
-          }
-
-          @media (min-width: 1024px) {
-            .albums-grid {
-              grid-template-columns: repeat(5, 1fr);
-            }
-          }
-        `}</style>
       </div>
-    </div>
+    </>
   );
 }

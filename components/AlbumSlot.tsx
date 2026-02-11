@@ -22,6 +22,7 @@ type AlbumSlotProps = {
   obscuration: Obscuration;
   album: Album;
   isRevealed: boolean;
+  isHighlighted?: boolean;
   onCorrectGuess: (timeMs: number, guessText: string) => void;
 };
 
@@ -95,6 +96,7 @@ export default function AlbumSlot({
   obscuration,
   album,
   isRevealed,
+  isHighlighted = false,
   onCorrectGuess,
 }: AlbumSlotProps) {
   const [timerStarted, setTimerStarted] = useState(false);
@@ -154,8 +156,11 @@ export default function AlbumSlot({
       setTimedOut(true);
       setTimerStarted(false);
       setShowGuessModal(false);
+      
+      // Call onCorrectGuess with 0 score for timeout
+      onCorrectGuess(21000, '');
     }
-  }, [elapsedTime, localRevealed]);
+  }, [elapsedTime, localRevealed, onCorrectGuess]);
 
   const drawPixelated = () => {
     if (!canvasRef.current || !imageRef.current) return;
@@ -210,7 +215,7 @@ export default function AlbumSlot({
       onCorrectGuess(elapsedTime, guessInput);
       setGuessInput('');
     } else {
-      // Don't close modal on wrong guess - just show red X and clear input
+      // Keep modal open, show wrong feedback, clear input
       setGuessInput('');
       setShowWrongGuess(true);
       setTimeout(() => setShowWrongGuess(false), 1000);
@@ -226,7 +231,11 @@ export default function AlbumSlot({
   return (
     <>
       <div className="album-slot">
-        <div className="album-cover-container" onClick={handleClick}>
+        <div 
+          className={`album-cover-container ${isHighlighted ? 'highlighted' : ''}`}
+          onClick={handleClick}
+          data-slot={slot}
+        >
           <canvas ref={canvasRef} className="album-canvas" />
 
           {showWrongGuess && (
@@ -293,6 +302,20 @@ export default function AlbumSlot({
 
           .album-cover-container:hover {
             box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
+          }
+
+          .album-cover-container.highlighted {
+            box-shadow: 0 0 0 4px #2563eb, 0 6px 12px rgba(37, 99, 235, 0.5);
+            animation: pulse 1.5s ease-in-out infinite;
+          }
+
+          @keyframes pulse {
+            0%, 100% {
+              box-shadow: 0 0 0 4px #2563eb, 0 6px 12px rgba(37, 99, 235, 0.5);
+            }
+            50% {
+              box-shadow: 0 0 0 4px #3b82f6, 0 6px 16px rgba(59, 130, 246, 0.7);
+            }
           }
 
           .album-canvas {
@@ -461,15 +484,6 @@ export default function AlbumSlot({
               <button onClick={handleSubmitGuess} className="modal-submit">
                 Submit
               </button>
-              <button
-                onClick={() => {
-                  setShowGuessModal(false);
-                  setGuessInput('');
-                }}
-                className="modal-cancel"
-              >
-                Cancel
-              </button>
             </div>
           </div>
 
@@ -526,8 +540,7 @@ export default function AlbumSlot({
               margin-top: 24px;
             }
 
-            .modal-submit,
-            .modal-cancel {
+            .modal-submit {
               flex: 1;
               padding: 12px 24px;
               font-size: 16px;
@@ -536,25 +549,12 @@ export default function AlbumSlot({
               border-radius: 8px;
               cursor: pointer;
               transition: all 0.2s;
-            }
-
-            .modal-submit {
               background: #2563eb;
               color: white;
             }
 
             .modal-submit:hover {
               background: #1d4ed8;
-            }
-
-            .modal-cancel {
-              background: #3a3a3a;
-              color: #999;
-            }
-
-            .modal-cancel:hover {
-              background: #4a4a4a;
-              color: white;
             }
           `}</style>
         </div>

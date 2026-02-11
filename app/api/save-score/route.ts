@@ -23,27 +23,63 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Insert play record
-    const { data: playData, error: playError } = await supabaseServer
+    // Check if play already exists
+    const { data: existingPlay } = await supabaseServer
       .from('plays')
-      .insert({
-        user_id: userId,
-        date: date,
-        total_score: totalScore,
-      })
-      .select()
-      .single();
+      .select('id')
+      .eq('user_id', userId)
+      .eq('date', date)
+      .maybeSingle();
 
-    if (playError) {
-      console.error('Error saving play:', playError);
-      return NextResponse.json({ error: playError.message }, { status: 500 });
+    let playId: number;
+
+    if (existingPlay) {
+      // Update existing play
+      const { data: updatedPlay, error: updateError } = await supabaseServer
+        .from('plays')
+        .update({ total_score: totalScore })
+        .eq('id', existingPlay.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('Error updating play:', updateError);
+        return NextResponse.json({ error: updateError.message }, { status: 500 });
+      }
+
+      playId = updatedPlay.id;
+      console.log('Play updated:', updatedPlay);
+
+      // Delete old turns and insert new ones
+      await supabaseServer
+        .from('play_turns')
+        .delete()
+        .eq('play_id', playId);
+
+    } else {
+      // Insert new play
+      const { data: newPlay, error: insertError } = await supabaseServer
+        .from('plays')
+        .insert({
+          user_id: userId,
+          date: date,
+          total_score: totalScore,
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('Error inserting play:', insertError);
+        return NextResponse.json({ error: insertError.message }, { status: 500 });
+      }
+
+      playId = newPlay.id;
+      console.log('Play inserted:', newPlay);
     }
-
-    console.log('Play saved:', playData);
 
     // Insert play_turns records
     const turnRecords = albumResults.map((result: AlbumResult) => ({
-      play_id: playData.id,
+      play_id: playId,
       slot: result.slot,
       album_id: result.album_id,
       score: result.score,
@@ -62,7 +98,7 @@ export async function POST(request: Request) {
     }
 
     console.log('Score saved successfully');
-    return NextResponse.json({ success: true, playId: playData.id });
+    return NextResponse.json({ success: true, playId });
   } catch (error) {
     console.error('Save score error:', error);
     return NextResponse.json({ 

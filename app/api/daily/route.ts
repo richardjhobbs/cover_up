@@ -8,28 +8,9 @@ import {
 import { supabaseServer } from '../../../lib/supabase/server';
 import { selectDailyAlbums, getWeeklyThemeName } from '../../../lib/musicbrainz/selector';
 
+// FORCE VERCEL TO NEVER CACHE THIS ROUTE
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-
-// HELPER: Transforms database rows into the standard DailySlot format
-function transformToSlot(entry: any): DailySlot {
-  const albumData = entry.album as any;
-  const data = Array.isArray(albumData) ? albumData[0] : albumData;
-
-  return {
-    slot: entry.slot,
-    difficulty: entry.difficulty,
-    obscuration: entry.obscuration ?? {},
-    album: {
-      id: Number(data.id),
-      artist: data.artist,
-      title: data.title,
-      year: data.year ?? null,
-      country: data.country ?? null,
-      cover_url: data.cover_url ?? null,
-    },
-  };
-}
 
 async function getDailyTheme(date: string) {
   const { data, error } = await supabaseServer
@@ -124,7 +105,6 @@ export async function GET() {
 
   let themeRow = await getDailyTheme(date);
 
-  // 1. Initial Creation: If no theme exists, create the theme AND the albums
   if (!themeRow) {
     const themeName = getWeeklyThemeName(dateObj);
     themeRow = await createDailyTheme(date, themeName);
@@ -132,20 +112,8 @@ export async function GET() {
     try {
       await createDailyAlbums(date);
     } catch (error) {
-      console.error('Failed to create daily albums during initialization:', error);
-    }
-  }
-
-  // 2. Recovery Logic: If theme exists but no albums are found, try generating them again
-  let dailyAlbums = await fetchDailyAlbums(date);
-
-  if (dailyAlbums.length === 0 && themeRow) {
-    console.log("Recovery mode: Theme exists but slots are empty. Generating now...");
-    try {
-      await createDailyAlbums(date);
-      dailyAlbums = await fetchDailyAlbums(date); // Re-fetch after generation
-    } catch (error) {
-      console.error('Recovery failed:', error);
+      console.error('Failed to create daily albums:', error);
+      // We don't return 500 here yet so the user can at least see the theme
     }
   }
 
@@ -154,7 +122,27 @@ export async function GET() {
     type: themeRow.theme_type,
   };
 
-  const slots: DailySlot[] = dailyAlbums.map(transformToSlot);
+  const dailyAlbums = await fetchDailyAlbums(date);
+
+  const slots: DailySlot[] = dailyAlbums.map((entry) => {
+    const albumData = entry.album as any;
+    // Schema confirms album is an object, but we keep the check for safety
+    const data = Array.isArray(albumData) ? albumData[0] : albumData;
+
+    return {
+      slot: entry.slot,
+      difficulty: entry.difficulty,
+      obscuration: entry.obscuration ?? {},
+      album: {
+        id: Number(data.id),
+        artist: data.artist,
+        title: data.title,
+        year: data.year ?? null,
+        country: data.country ?? null,
+        cover_url: data.cover_url ?? null,
+      },
+    };
+  });
 
   return NextResponse.json(buildDailyResponse(date, theme, slots));
 }

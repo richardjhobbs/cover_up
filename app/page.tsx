@@ -73,7 +73,6 @@ export default function Home() {
   const [monthlyLeaderboard, setMonthlyLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [highlightedAlbum, setHighlightedAlbum] = useState<number | null>(null);
   const [isFlashing, setIsFlashing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const storedUsername = localStorage.getItem('coverup_username');
@@ -220,7 +219,7 @@ export default function Home() {
     }
   };
 
-  // Add completion bonus
+  // Add completion bonus and mark game complete
   useEffect(() => {
     if (dailyData && completedAlbums.size === 5 && !gameComplete) {
       setTotalScore(prev => prev + 250);
@@ -228,21 +227,19 @@ export default function Home() {
     }
   }, [completedAlbums, dailyData, gameComplete]);
 
-  // FIXED: Save only when albums completed, not on score changes
+  // Save score ONLY when game is complete (all 5 albums done) and not already saved
   useEffect(() => {
     const saveScore = async () => {
-      if (!dailyData || !userId || completedAlbums.size === 0 || isSaving) return;
-      
-      // Don't re-save if already saved final score
-      if (completedAlbums.size === 5 && scoreSaved) return;
-      
-      setIsSaving(true);
-      
-      // Calculate score from results + bonus
-      let currentScore = albumResults.reduce((sum, r) => sum + r.score, 0);
-      if (completedAlbums.size === 5) {
-        currentScore += 250;
+      // Only save when:
+      // 1. Game is complete (all 5 albums)
+      // 2. Not already saved
+      // 3. Have user ID and daily data
+      if (!gameComplete || scoreSaved || !userId || !dailyData || albumResults.length !== 5) {
+        return;
       }
+      
+      // Calculate final score: sum of all album scores + 250 completion bonus
+      const finalScore = albumResults.reduce((sum, r) => sum + r.score, 0) + 250;
       
       const resultsToSave = albumResults.map(r => ({
         slot: r.slot,
@@ -260,25 +257,24 @@ export default function Home() {
           body: JSON.stringify({
             userId,
             date: dailyData.date,
-            totalScore: currentScore,
+            totalScore: finalScore,
             albumResults: resultsToSave,
           }),
         });
         
         if (response.ok) {
-          if (completedAlbums.size === 5) {
-            setScoreSaved(true);
-          }
+          setScoreSaved(true);
+          console.log('Score saved successfully:', finalScore);
+        } else {
+          console.error('Failed to save score:', await response.text());
         }
       } catch (error) {
         console.error('Error saving score:', error);
-      } finally {
-        setTimeout(() => setIsSaving(false), 1000);
       }
     };
     
     saveScore();
-  }, [completedAlbums.size, dailyData, userId, albumResults, scoreSaved, isSaving]);
+  }, [gameComplete, scoreSaved, userId, dailyData, albumResults]);
 
   const handleUsernameSubmit = async (newUsername: string) => {
     const newUserId = crypto.randomUUID();

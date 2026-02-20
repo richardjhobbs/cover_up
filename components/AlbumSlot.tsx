@@ -24,6 +24,7 @@ type AlbumSlotProps = {
   isRevealed: boolean;
   isHighlighted?: boolean;
   onCorrectGuess: (timeMs: number, guessText: string) => void;
+  onTimeout?: () => void;
 };
 
 function normalizeForComparison(text: string): string {
@@ -98,6 +99,7 @@ export default function AlbumSlot({
   isRevealed,
   isHighlighted = false,
   onCorrectGuess,
+  onTimeout,
 }: AlbumSlotProps) {
   const [timerStarted, setTimerStarted] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -111,6 +113,12 @@ export default function AlbumSlot({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const onTimeoutRef = useRef(onTimeout);
+  
+  //Keep timeout ref updated
+  useEffect(() => {
+    onTimeoutRef.current = onTimeout;
+  });
 
   useEffect(() => {
     if (!album.cover_url) return;
@@ -152,15 +160,17 @@ export default function AlbumSlot({
 
   // Timeout after 21 seconds
   useEffect(() => {
-    if (elapsedTime >= 21000 && !localRevealed) {
+    if (elapsedTime >= 21000 && !localRevealed && !timedOut) {
       setTimedOut(true);
       setTimerStarted(false);
       setShowGuessModal(false);
       
-      // Call onCorrectGuess with 0 score for timeout
-      onCorrectGuess(21000, '');
+      // Notify parent of timeout using ref
+      if (onTimeoutRef.current) {
+        onTimeoutRef.current();
+      }
     }
-  }, [elapsedTime, localRevealed, onCorrectGuess]);
+  }, [elapsedTime, localRevealed, timedOut]);
 
   const drawPixelated = () => {
     if (!canvasRef.current || !imageRef.current) return;
@@ -173,17 +183,17 @@ export default function AlbumSlot({
     canvas.width = size;
     canvas.height = size;
 
-    let pixelSize = 20;
+    let pixelSize = 25;
     if (localRevealed || elapsedTime >= 21000) {
       ctx.imageSmoothingEnabled = true;
       ctx.drawImage(imageRef.current, 0, 0, size, size);
       return;
     } else if (elapsedTime >= 14000) {
-      pixelSize = 60;
+      pixelSize = 70;
     } else if (elapsedTime >= 7000) {
-      pixelSize = 35;
+      pixelSize = 45;
     } else {
-      pixelSize = 20;
+      pixelSize = 25;
     }
 
     ctx.imageSmoothingEnabled = false;

@@ -981,3 +981,207 @@ body {
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
+
+/* ============================================
+   COMEBACK MODAL
+   ============================================ */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.comeback-modal {
+  background: var(--color-chalkboard);
+  border: 12px solid var(--color-wood);
+  border-radius: 4px;
+  padding: 3rem 2.5rem;
+  width: 500px;
+  max-width: 90vw;
+  box-shadow: 
+    0 24px 80px rgba(0, 0, 0, 0.9),
+    inset 0 0 60px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.comeback-modal::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
+  border: 2px solid var(--color-wood-dark);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.comeback-content {
+  text-align: center;
+}
+
+.comeback-title {
+  font-family: 'Schoolbell', cursive;
+  font-size: 2.5rem;
+  color: var(--color-chalk);
+  text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.3);
+  margin: 0 0 1.5rem 0;
+  letter-spacing: 2px;
+}
+
+.comeback-message {
+  font-family: 'Special Elite', monospace;
+  font-size: 1.3rem;
+  color: #ffd700;
+  margin: 0 0 2rem 0;
+  line-height: 1.6;
+}
+
+.comeback-button {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 1rem 3rem;
+  background: var(--color-wood);
+  color: var(--color-cream);
+  border: 3px solid var(--color-wood-dark);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+.comeback-button:hover {
+  background: var(--color-wood-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.7);
+}
+
+.comeback-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* ============================================
+   ROUND INDICATOR
+   ============================================ */
+
+.round-indicator {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 3px;
+  color: var(--color-gold);
+  text-align: center;
+  margin: 0.5rem 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* ============================================
+   ROUND TRANSITION MODAL
+   ============================================ */
+
+.round-transition-modal {
+  background: var(--color-chalkboard);
+  border: 12px solid var(--color-wood);
+  border-radius: 4px;
+  padding: 3rem 2.5rem;
+  width: 600px;
+  max-width: 90vw;
+  box-shadow: 
+    0 24px 80px rgba(0, 0, 0, 0.9),
+    inset 0 0 60px rgba(0, 0, 0, 0.3);
+  position: relative;
+  text-align: center;
+}
+
+.round-transition-modal::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
+  border: 2px solid var(--color-wood-dark);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.transition-content {
+  text-align: center;
+}
+
+.transition-title {
+  font-family: 'Schoolbell', cursive;
+  font-size: 3rem;
+  color: var(--color-chalk);
+  text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.3);
+  margin: 0 0 1.5rem 0;
+  letter-spacing: 2px;
+}
+
+.transition-score {
+  font-family: 'Schoolbell', cursive;
+  font-size: 2.5rem;
+  color: var(--color-gold);
+  margin: 0 0 2rem 0;
+  text-shadow: 2px 2px 4px rgba(255, 215, 0, 0.3);
+}
+
+.transition-next {
+  font-family: 'Special Elite', monospace;
+  font-size: 1.3rem;
+  color: var(--color-chalk);
+  margin: 0 0 0.5rem 0;
+}
+
+.transition-genre {
+  font-family: 'Oswald', sans-serif;
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: 3px;
+  color: var(--color-gold);
+  text-transform: uppercase;
+}
+
+/* ============================================
+   NEXT ROUND BUTTON
+   ============================================ */
+
+.next-round-button {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 1rem 2.5rem;
+  margin-top: 1.5rem;
+  background: var(--color-gold);
+  color: var(--color-chalkboard);
+  border: 3px solid #b8860b;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+.next-round-button:hover {
+  background: #ffd700;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.7);
+}
+
+.next-round-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}

@@ -1,0 +1,13 @@
+{
+  "name": "coverup-album-processor",
+  "version": "1.0.0",
+  "description": "Process album CSV and fetch MusicBrainz data",
+  "main": "process-albums.js",
+  "scripts": {
+    "start": "node process-albums.js"
+  },
+  "dependencies": {
+    "csv-parser": "^3.0.0",
+    "node-fetch": "^2.7.0"
+  }
+}

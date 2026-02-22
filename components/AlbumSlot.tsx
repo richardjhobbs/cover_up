@@ -131,12 +131,11 @@ export default function AlbumSlot({
     const img = new Image();
     img.crossOrigin = 'anonymous';
     
-    // Use proxy for external images to bypass CORS
-    if (album.cover_url) {
-      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(album.cover_url)}`;
-      img.src = proxyUrl;
-    } else {
-      // Fallback to placeholder if no cover URL
+   // Use direct cover art URLs (Cover Art Archive has CORS enabled)
+if (album.cover_url) {
+  img.src = album.cover_url;
+} else {
+  // Fallback to placeholder if no cover URL
       ctx.fillStyle = '#2a2a2a';
       ctx.fillRect(0, 0, 300, 300);
       ctx.fillStyle = '#666';

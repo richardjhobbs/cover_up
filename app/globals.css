@@ -1158,6 +1158,8 @@ body {
    NEXT ROUND BUTTON
    ============================================ */
 
+/* Complete /app/globals.css - Replace lines 1161-1187 with this: */
+
 .next-round-button {
   font-family: 'Oswald', sans-serif;
   font-size: 1.3rem;
@@ -1166,17 +1168,17 @@ body {
   text-transform: uppercase;
   padding: 1rem 2.5rem;
   margin-top: 1.5rem;
-  background: var(--color-gold);
-  color: var(--color-chalkboard);
+  background: #ffd700;
+  color: #1a1a1a;
   border: 3px solid #b8860b;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
 }
 
 .next-round-button:hover {
-  background: #ffd700;
+  background: #ffed4e;
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.7);
 }

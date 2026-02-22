@@ -120,16 +120,46 @@ export default function AlbumSlot({
     onTimeoutRef.current = onTimeout;
   });
 
+  // Load image with proxy
   useEffect(() => {
-    if (!album.cover_url) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
     const img = new Image();
     img.crossOrigin = 'anonymous';
+    
+    // Use proxy for external images to bypass CORS
+    if (album.cover_url) {
+      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(album.cover_url)}`;
+      img.src = proxyUrl;
+    } else {
+      // Fallback to placeholder if no cover URL
+      ctx.fillStyle = '#2a2a2a';
+      ctx.fillRect(0, 0, 300, 300);
+      ctx.fillStyle = '#666';
+      ctx.font = '20px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('No Cover Available', 150, 150);
+      return;
+    }
+
     img.onload = () => {
       imageRef.current = img;
       drawPixelated();
     };
-    img.src = album.cover_url.replace('http://', 'https://');
+
+    img.onerror = () => {
+      // Handle image load error with fallback
+      ctx.fillStyle = '#2a2a2a';
+      ctx.fillRect(0, 0, 300, 300);
+      ctx.fillStyle = '#666';
+      ctx.font = '20px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('Image Unavailable', 150, 150);
+    };
   }, [album.cover_url]);
 
   useEffect(() => {

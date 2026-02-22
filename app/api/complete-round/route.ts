@@ -29,8 +29,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Round already completed' }, { status: 400 });
     }
 
-    // Add completion bonus to round score
-    const finalRoundScore = round.round_score + COMPLETION_BONUS;
+    // Check how many albums were guessed correctly in this round
+    const { data: attempts } = await supabaseServer
+      .from('album_attempts')
+      .select('is_correct')
+      .eq('round_id', roundId);
+
+    const correctCount = attempts?.filter(a => a.is_correct).length || 0;
+    const shouldAwardBonus = correctCount === 5;
+
+    // Add completion bonus ONLY if all 5 correct
+    const finalRoundScore = round.round_score + (shouldAwardBonus ? COMPLETION_BONUS : 0);
 
     // Mark round as completed
     const { error: updateError } = await supabaseServer
@@ -93,7 +102,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       roundCompleted: true,
       finalRoundScore: finalRoundScore,
-      completionBonus: COMPLETION_BONUS,
+      completionBonus: shouldAwardBonus ? COMPLETION_BONUS : 0,
       roundsCompleted: (session?.rounds_completed || 0) + 1,
       totalScore: (session?.total_score || 0) + finalRoundScore,
       nextRound: nextRound,

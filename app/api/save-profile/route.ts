@@ -3,12 +3,12 @@ import { supabaseServer } from '@/lib/supabase/server';
 
 export async function POST(request: Request) {
   try {
-    const { userId, username } = await request.json();
+    const { id, username } = await request.json();
 
     const { error } = await supabaseServer
       .from('profiles')
       .insert({
-        id: userId,
+        id: id,
         username: username,
         email: null,
       });

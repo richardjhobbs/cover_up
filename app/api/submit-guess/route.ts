@@ -4,35 +4,67 @@ import { supabaseServer } from '@/lib/supabase/server';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// Scoring logic (same as current system)
+// Scoring logic
 function calculateScore(timeMs: number): number {
-  if (timeMs <= 7000) return 200;      // ≤7s
-  if (timeMs <= 14000) return 120;     // ≤14s
-  if (timeMs <= 21000) return 50;      // ≤21s
-  return 0;                             // timeout
+  if (timeMs <= 7000) return 200;
+  if (timeMs <= 14000) return 120;
+  if (timeMs <= 21000) return 50;
+  return 0;
 }
 
-// Normalize guess for matching
-function normalizeGuess(text: string): string {
-  return text.trim().toLowerCase()
-    .replace(/[^\w\s]/g, '')  // Remove punctuation
-    .replace(/\s+/g, ' ');     // Normalize spaces
+// Normalize for comparison (SAME as frontend)
+function normalizeForComparison(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/^the\s+/i, '')
+    .replace(/^a\s+/i, '')
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, ' ');
 }
 
-// Check if guess matches artist
-function isMatch(guess: string, artist: string): boolean {
-  const normalizedGuess = normalizeGuess(guess);
-  const normalizedArtist = normalizeGuess(artist);
-  
-  // Exact match
-  if (normalizedGuess === normalizedArtist) return true;
-  
-  // Partial match (guess contains artist or vice versa)
-  if (normalizedGuess.includes(normalizedArtist) || normalizedArtist.includes(normalizedGuess)) {
-    return true;
+// Levenshtein distance (SAME as frontend)
+function levenshteinDistance(a: string, b: string): number {
+  const matrix: number[][] = [];
+
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i];
   }
+
+  for (let j = 0; j <= a.length; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
+    }
+  }
+
+  return matrix[b.length][a.length];
+}
+
+// Fuzzy match (SAME as frontend)
+function fuzzyMatch(guess: string, actual: string): boolean {
+  const normalizedGuess = normalizeForComparison(guess);
+  const normalizedActual = normalizeForComparison(actual);
   
-  return false;
+  if (normalizedGuess === normalizedActual) return true;
+  
+  if (normalizedActual.includes(normalizedGuess) && normalizedGuess.length > 3) return true;
+  
+  const distance = levenshteinDistance(normalizedGuess, normalizedActual);
+  const tolerance = Math.max(1, Math.floor(normalizedActual.length * 0.15));
+  
+  return distance <= tolerance;
 }
 
 export async function POST(request: Request) {
@@ -43,7 +75,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Get album details and slot number
+    // Get album details
     const { data: album, error: albumError } = await supabaseServer
       .from('albums')
       .select('artist')
@@ -64,8 +96,14 @@ export async function POST(request: Request) {
 
     const slot = roundAlbum?.slot || 0;
 
-    // Check if guess is correct
-    const correct = isMatch(guessText, album.artist);
+    // Check if guess is correct using SAME fuzzy match as frontend
+    const correct = fuzzyMatch(guessText, album.artist);
+    
+    console.log('Fuzzy match check:', { 
+      guess: guessText, 
+      artist: album.artist, 
+      correct 
+    });
     
     // Calculate score
     const score = correct ? calculateScore(timeMs) : 0;

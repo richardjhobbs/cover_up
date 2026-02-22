@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import AlbumSlot from '@/components/AlbumSlot';
-import UsernameModal from '@/components/UsernameModal';
+import AlbumSlot from '../components/AlbumSlot';
+import UsernameModal from '../components/UsernameModal';
 
-type Album = {
+type AlbumData = {
   slot: number;
   albumId: number;
   artist: string;
@@ -22,7 +22,7 @@ type RoundData = {
   genre: string;
   completed: boolean;
   roundScore: number;
-  albums: Album[];
+  albums: AlbumData[];
 };
 
 type SessionData = {
@@ -31,7 +31,6 @@ type SessionData = {
   rounds: Array<{
     roundNumber: number;
     genre: string;
-    albumCount: number;
   }>;
 };
 
@@ -39,136 +38,102 @@ type LeaderboardEntry = {
   rank: number;
   username: string;
   score: number;
-  isCurrentUser?: boolean;
+  isCurrentUser: boolean;
 };
 
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const day = date.getUTCDate();
-  const suffix = day === 1 || day === 21 || day === 31 ? 'st' : day === 2 || day === 22 ? 'nd' : day === 3 || day === 23 ? 'rd' : 'th';
-  return `${months[date.getUTCMonth()]} ${day}${suffix}`;
-}
-
 export default function Home() {
-  // User state
   const [username, setUsername] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-
-  // Session state
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [currentRound, setCurrentRound] = useState<RoundData | null>(null);
   const [currentRoundNumber, setCurrentRoundNumber] = useState(1);
-  
-  // Game state
   const [completedAlbums, setCompletedAlbums] = useState<Set<number>>(new Set());
   const [timedOutAlbums, setTimedOutAlbums] = useState<Set<number>>(new Set());
+  const [highlightedAlbum, setHighlightedAlbum] = useState<number | null>(null);
   const [totalScore, setTotalScore] = useState(0);
   const [roundsCompleted, setRoundsCompleted] = useState(0);
-  const [gameComplete, setGameComplete] = useState(false);
   const [canAdvance, setCanAdvance] = useState(false);
-  
-  // UI state
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showRoundTransition, setShowRoundTransition] = useState(false);
   const [showComeback, setShowComeback] = useState(false);
-  const [highlightedAlbum, setHighlightedAlbum] = useState<number | null>(null);
-  
+  const [gameComplete, setGameComplete] = useState(false);
+  const [lastCompletionBonus, setLastCompletionBonus] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   // Leaderboards
   const [dailyLeaderboard, setDailyLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [weeklyLeaderboard, setWeeklyLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [monthlyLeaderboard, setMonthlyLeaderboard] = useState<LeaderboardEntry[]>([]);
 
-  // Load user from localStorage
   useEffect(() => {
     const storedUsername = localStorage.getItem('coverup_username');
     const storedUserId = localStorage.getItem('coverup_user_id');
-    
+
     if (storedUsername && storedUserId) {
       setUsername(storedUsername);
       setUserId(storedUserId);
-      setLoading(false);
-    } else {
-      setLoading(false);
     }
   }, []);
 
-  // Check if round is completable
+  useEffect(() => {
+    if (username && userId) {
+      initializeSession();
+    }
+  }, [username, userId]);
+
   useEffect(() => {
     if (!currentRound) return;
     const totalAttempted = completedAlbums.size + timedOutAlbums.size;
     setCanAdvance(totalAttempted === 5);
   }, [completedAlbums, timedOutAlbums, currentRound]);
 
-  // Initialize session when user is loaded
-  useEffect(() => {
-    if (!userId) return;
-    
-    async function initializeSession() {
-      try {
-        const today = new Date().toISOString().split('T')[0];
-        
-        const response = await fetch('/api/start-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, date: today })
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to start session');
-        }
-
-        const data = await response.json() as SessionData & {
-          alreadyExists?: boolean;
-          roundsCompleted?: number;
-        };
-        
-        if (data.alreadyExists && data.roundsCompleted === 3) {
-          setGameComplete(true);
-          setShowComeback(true);
-          await loadLeaderboards(today);
-          return;
-        }
-
-        setSessionData(data);
-        await loadRound(data.sessionId, 1);
-        await loadLeaderboards(today);
-
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to initialize');
-      }
-    }
-
-    initializeSession();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
-
-  const handleUsernameSubmit = async (newUsername: string) => {
-    const newUserId = crypto.randomUUID();
-    
+  async function initializeSession() {
     try {
-      const response = await fetch('/api/save-profile', {
+      const today = new Date().toISOString().split('T')[0];
+      
+      const response = await fetch('/api/start-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          userId: newUserId, 
-          username: newUsername 
-        }),
+        body: JSON.stringify({ userId, date: today })
       });
 
-      if (response.ok) {
-        localStorage.setItem('coverup_username', newUsername);
-        localStorage.setItem('coverup_user_id', newUserId);
-        setUsername(newUsername);
-        setUserId(newUserId);
+      if (!response.ok) {
+        throw new Error('Failed to start session');
       }
+
+      const data = await response.json();
+
+      // Check if already completed today
+      if (data.alreadyExists && data.roundsCompleted === 3) {
+        setGameComplete(true);
+        setRoundsCompleted(3);
+        await loadLeaderboards(today);
+        setLoading(false);
+        return;
+      }
+
+      setSessionData(data);
+      
+      const startRound = data.roundsCompleted ? data.roundsCompleted + 1 : 1;
+      await loadRound(data.sessionId, startRound);
+      await loadLeaderboards(today);
+      
+      setLoading(false);
+
     } catch (err) {
-      console.error('Error saving profile:', err);
+      setError(err instanceof Error ? err.message : 'Failed to initialize session');
+      setLoading(false);
     }
-  };
+  }
 
   async function loadRound(sessionId: number, roundNumber: number) {
+    console.log('loadRound called with:', { sessionId, roundNumber });
+    
+    // CRITICAL: Reset ALL game state BEFORE loading new round data
+    setCompletedAlbums(new Set());
+    setTimedOutAlbums(new Set());
+    setHighlightedAlbum(null);
+    
     try {
       const response = await fetch(`/api/get-round?sessionId=${sessionId}&roundNumber=${roundNumber}`);
       
@@ -177,6 +142,8 @@ export default function Home() {
       }
 
       const data = await response.json() as RoundData;
+      console.log('Loaded round data:', { roundId: data.roundId, roundNumber: data.roundNumber, genre: data.genre });
+      
       setCurrentRound(data);
       setCurrentRoundNumber(roundNumber);
       
@@ -186,8 +153,10 @@ export default function Home() {
           revealed.add(album.slot);
         }
       });
-      setCompletedAlbums(revealed);
-      setTimedOutAlbums(new Set());
+      
+      if (revealed.size > 0) {
+        setCompletedAlbums(revealed);
+      }
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load round');
@@ -215,8 +184,8 @@ export default function Home() {
     }
   }
 
-  async function handleCorrectGuess(slot: number, timeMs: number, guessText: string, albumId: number) {
-    if (!currentRound || completedAlbums.has(slot)) return;
+  const handleCorrectGuess = useCallback(async (slot: number, timeMs: number, guessText: string, albumId: number) => {
+    if (!currentRound) return;
 
     try {
       const response = await fetch('/api/submit-guess', {
@@ -224,9 +193,9 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           roundId: currentRound.roundId,
-          albumId,
-          guessText,
-          timeMs
+          albumId: albumId,
+          guessText: guessText,
+          timeMs: timeMs
         })
       });
 
@@ -240,36 +209,37 @@ export default function Home() {
         correctArtist: string;
       };
 
-      console.log('Submit guess result:', { slot, timeMs, score: result.score, correct: result.correct });
+      console.log('Submit guess result:', result);
 
       if (result.correct) {
         setCompletedAlbums(prev => new Set([...prev, slot]));
         setTotalScore(prev => prev + result.score);
-        setHighlightedAlbum(slot);
-        setTimeout(() => setHighlightedAlbum(null), 2000);
-        
-        // Auto-focus next incomplete album
-        setTimeout(() => {
-          const nextSlot = currentRound.albums.find(
-            album => !completedAlbums.has(album.slot) && !timedOutAlbums.has(album.slot) && album.slot !== slot
-          );
-          if (nextSlot) {
-            // Trigger click on next album to open modal
-            const nextElement = document.querySelector(`[data-slot="${nextSlot.slot}"]`);
-            if (nextElement instanceof HTMLElement) {
+
+        const nextSlot = slot + 1;
+        if (nextSlot <= 5 && !completedAlbums.has(nextSlot) && !timedOutAlbums.has(nextSlot)) {
+          setHighlightedAlbum(nextSlot);
+          
+          setTimeout(() => {
+            const nextElement = document.querySelector(`[data-slot="${nextSlot}"]`) as HTMLElement;
+            if (nextElement) {
               nextElement.click();
             }
-          }
-        }, 500);
+          }, 500);
+        }
       }
 
     } catch (err) {
       console.error('Error submitting guess:', err);
     }
-  }
+  }, [currentRound, completedAlbums, timedOutAlbums]);
 
   const handleTimeout = useCallback((slot: number) => {
-    setTimedOutAlbums(prev => new Set([...prev, slot]));
+    console.log('TIMEOUT CALLED FOR SLOT:', slot);
+    setTimedOutAlbums(prev => {
+      const newSet = new Set([...prev, slot]);
+      console.log('Updated timedOutAlbums:', Array.from(newSet));
+      return newSet;
+    });
   }, []);
 
   async function completeRound() {
@@ -305,13 +275,16 @@ export default function Home() {
       
       console.log('Complete round result:', result);
       
+      setLastCompletionBonus(result.completionBonus);
       setRoundsCompleted(result.roundsCompleted);
       setTotalScore(result.totalScore);
 
       if (result.allRoundsComplete) {
         setGameComplete(true);
-        await loadLeaderboards(sessionData.date);
-        setTimeout(() => setShowComeback(true), 2000);
+        setTimeout(async () => {
+          await loadLeaderboards(sessionData.date);
+          setShowComeback(true);
+        }, 1000);
       } else if (result.nextRound) {
         setShowRoundTransition(true);
         
@@ -325,6 +298,45 @@ export default function Home() {
       console.error('Error completing round:', err);
     }
   }
+
+  const handleUsernameSubmit = async (newUsername: string) => {
+    const newUserId = crypto.randomUUID();
+    
+    try {
+      const response = await fetch('/api/save-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: newUserId,
+          username: newUsername
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.error || 'Failed to save profile');
+        return;
+      }
+
+      localStorage.setItem('coverup_username', newUsername);
+      localStorage.setItem('coverup_user_id', newUserId);
+      
+      setUsername(newUsername);
+      setUserId(newUserId);
+
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      alert('Failed to save profile');
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      month: 'long',
+      day: 'numeric'
+    });
+  };
 
   const renderLeaderboard = (entries: LeaderboardEntry[], title: string) => {
     if (entries.length === 0) return null;
@@ -374,6 +386,42 @@ export default function Home() {
     );
   }
 
+  // Show completed game state
+  if (gameComplete && !currentRound) {
+    return (
+      <>
+        <div className="page-container">
+          <div className="content-wrapper">
+            <header className="header">
+              <h1 className="title">COVER UP</h1>
+              <div className="round-indicator">Game Complete!</div>
+              <div className="date-label">
+                {sessionData?.date ? formatDate(sessionData.date) : new Date().toLocaleDateString()}
+              </div>
+              <div className="greeting">Well done <span>{username}</span>!</div>
+            </header>
+
+            <div className="score-section">
+              <div className="chalkboard">
+                <div className="chalk-label">FINAL SCORE</div>
+                <div className="chalk-number">{totalScore.toLocaleString()}</div>
+                <p style={{ marginTop: '1rem', fontSize: '0.9rem', opacity: 0.8 }}>
+                  Come back tomorrow for a new challenge!
+                </p>
+              </div>
+            </div>
+
+            <div className="crates-section">
+              {renderLeaderboard(dailyLeaderboard, 'Daily')}
+              {renderLeaderboard(weeklyLeaderboard, 'Weekly')}
+              {renderLeaderboard(monthlyLeaderboard, 'Monthly')}
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   if (!sessionData || !currentRound) {
     return (
       <div className="page-container">
@@ -403,7 +451,7 @@ export default function Home() {
             <div className="shelf">
               {currentRound.albums.map((album) => (
                 <AlbumSlot
-                  key={album.slot}
+                  key={`${currentRoundNumber}-${album.slot}`}
                   slot={album.slot}
                   difficulty={album.slot}
                   obscuration={{ type: 'blur', intensity: 20 }}
@@ -456,9 +504,13 @@ export default function Home() {
           <div className="round-transition-modal">
             <div className="transition-content">
               <h2 className="transition-title">Round {currentRoundNumber} Complete!</h2>
-              <div className="transition-score">+250 Bonus</div>
+              {lastCompletionBonus > 0 && (
+                <div className="transition-score">+{lastCompletionBonus} Bonus</div>
+              )}
               <div className="transition-next">Next: Round {currentRoundNumber + 1}</div>
-              <div className="transition-genre">{sessionData.rounds[currentRoundNumber]?.genre}</div>
+              <div className="transition-genre">
+                {sessionData?.rounds?.[currentRoundNumber]?.genre || ''}
+              </div>
             </div>
           </div>
         </div>

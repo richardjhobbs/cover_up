@@ -11,54 +11,64 @@ export async function GET(request: Request) {
     const date = searchParams.get('date') || new Date().toISOString().split('T')[0];
 
     // Get daily leaderboard for specific date
-    const { data: dailyData } = await supabaseServer
+    const { data: dailyData, error: dailyError } = await supabaseServer
       .from('user_daily_sessions')
-      .select(`
-        user_id,
-        total_score,
-        completed_at,
-        profiles:user_id (username)
-      `)
+      .select('user_id, total_score, completed_at')
       .eq('date', date)
       .eq('rounds_completed', 3)
       .order('total_score', { ascending: false })
       .order('completed_at', { ascending: true })
       .limit(10);
 
-    const daily = (dailyData || []).map((entry: any, idx: number) => ({
-      rank: idx + 1,
-      username: entry.profiles?.username || 'Anonymous',
-      score: entry.total_score,
-      isCurrentUser: entry.user_id === userId
+    if (dailyError) {
+      console.error('Daily leaderboard error:', dailyError);
+    }
+
+    // Get usernames separately
+    const daily = await Promise.all((dailyData || []).map(async (entry: any, idx: number) => {
+      const { data: profile } = await supabaseServer
+        .from('profiles')
+        .select('username')
+        .eq('id', entry.user_id)
+        .single();
+
+      return {
+        rank: idx + 1,
+        username: profile?.username || 'Anonymous',
+        score: entry.total_score,
+        isCurrentUser: entry.user_id === userId
+      };
     }));
 
     // Get weekly leaderboard
     const weekStart = getWeekStart(new Date(date));
     const { data: weeklyData } = await supabaseServer
       .from('user_daily_sessions')
-      .select(`
-        user_id,
-        total_score,
-        profiles:user_id (username)
-      `)
+      .select('user_id, total_score')
       .gte('date', weekStart)
       .eq('rounds_completed', 3);
 
     // Aggregate weekly scores
     const weeklyMap = new Map<string, { username: string; score: number; userId: string }>();
-    (weeklyData || []).forEach((entry: any) => {
-      const username = entry.profiles?.username || 'Anonymous';
+    
+    for (const entry of (weeklyData || [])) {
       const existing = weeklyMap.get(entry.user_id);
       if (existing) {
         existing.score += entry.total_score;
       } else {
+        const { data: profile } = await supabaseServer
+          .from('profiles')
+          .select('username')
+          .eq('id', entry.user_id)
+          .single();
+
         weeklyMap.set(entry.user_id, {
-          username,
+          username: profile?.username || 'Anonymous',
           score: entry.total_score,
           userId: entry.user_id
         });
       }
-    });
+    }
 
     const weekly = Array.from(weeklyMap.values())
       .sort((a, b) => b.score - a.score)
@@ -74,29 +84,31 @@ export async function GET(request: Request) {
     const monthStart = getMonthStart(new Date(date));
     const { data: monthlyData } = await supabaseServer
       .from('user_daily_sessions')
-      .select(`
-        user_id,
-        total_score,
-        profiles:user_id (username)
-      `)
+      .select('user_id, total_score')
       .gte('date', monthStart)
       .eq('rounds_completed', 3);
 
     // Aggregate monthly scores
     const monthlyMap = new Map<string, { username: string; score: number; userId: string }>();
-    (monthlyData || []).forEach((entry: any) => {
-      const username = entry.profiles?.username || 'Anonymous';
+    
+    for (const entry of (monthlyData || [])) {
       const existing = monthlyMap.get(entry.user_id);
       if (existing) {
         existing.score += entry.total_score;
       } else {
+        const { data: profile } = await supabaseServer
+          .from('profiles')
+          .select('username')
+          .eq('id', entry.user_id)
+          .single();
+
         monthlyMap.set(entry.user_id, {
-          username,
+          username: profile?.username || 'Anonymous',
           score: entry.total_score,
           userId: entry.user_id
         });
       }
-    });
+    }
 
     const monthly = Array.from(monthlyMap.values())
       .sort((a, b) => b.score - a.score)

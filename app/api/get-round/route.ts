@@ -48,16 +48,21 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: albumsError.message }, { status: 500 });
     }
 
-    // Get existing attempts for this round
+    // Get existing attempts for THIS SPECIFIC ROUND ONLY
     const { data: attempts } = await supabaseServer
       .from('album_attempts')
-      .select('album_id, is_correct, score')
+      .select('album_id, slot, is_correct, score')
       .eq('round_id', round.id);
 
     // Format response
     const albums = roundAlbums.map((ra: any) => {
       const albumData = Array.isArray(ra.album) ? ra.album[0] : ra.album;
-      const attempt = attempts?.find(a => a.album_id === albumData.id);
+      
+      // CRITICAL: Only match attempts that are for THIS round AND this slot
+      const attempt = attempts?.find(a => 
+        a.album_id === albumData.id && 
+        a.slot === ra.slot
+      );
       
       return {
         slot: ra.slot,
@@ -67,7 +72,8 @@ export async function GET(request: Request) {
         year: albumData.year,
         coverUrl: albumData.cover_url,
         genres: albumData.genres,
-        isRevealed: attempt?.is_correct || false,
+        // ONLY revealed if there's a correct attempt for THIS round
+        isRevealed: !!attempt?.is_correct,
         score: attempt?.score || 0
       };
     });

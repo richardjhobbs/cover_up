@@ -1187,3 +1187,107 @@ body {
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
+/* Add this to your globals.css file */
+
+/* ============================================
+   INFO SECTION (About/How to Play)
+   ============================================ */
+
+.info-section {
+  max-width: 800px;
+  margin: 4rem auto 2rem;
+  padding: 0 1rem;
+}
+
+.info-paper {
+  background: var(--color-tape);
+  padding: 2.5rem 2rem;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.6),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+  position: relative;
+  transform: rotate(-0.5deg);
+}
+
+/* Masking tape effect */
+.info-paper::before,
+.info-paper::after {
+  content: '';
+  position: absolute;
+  width: 60px;
+  height: 25px;
+  background: rgba(245, 230, 200, 0.9);
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.info-paper::before {
+  top: -10px;
+  left: 20px;
+  transform: rotate(-5deg);
+}
+
+.info-paper::after {
+  top: -8px;
+  right: 30px;
+  transform: rotate(3deg);
+}
+
+.info-title {
+  font-family: 'Archivo Black', sans-serif;
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #000;
+  margin: 0 0 1rem 0;
+  text-transform: uppercase;
+}
+
+.info-subtitle {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #000;
+  margin: 1.5rem 0 0.5rem 0;
+  text-transform: uppercase;
+}
+
+.info-text {
+  font-family: 'Special Elite', monospace;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #333;
+  margin: 0 0 1rem 0;
+}
+
+.info-footer {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 1rem;
+  color: #000;
+  margin: 1.5rem 0 0 0;
+  text-align: center;
+  padding-top: 1rem;
+  border-top: 2px dashed rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+  .info-paper {
+    padding: 2rem 1.5rem;
+  }
+  
+  .info-title {
+    font-size: 1.5rem;
+  }
+  
+  .info-subtitle {
+    font-size: 1.1rem;
+  }
+  
+  .info-text {
+    font-size: 0.9rem;
+  }
+}

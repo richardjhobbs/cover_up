@@ -1,0 +1,86 @@
+genre,artist,album,year,country,notes
+UK Punk,The Clash,The Clash,1977,UK,Debut album
+UK Punk,The Jam,In the City,1977,UK,Mod revival
+UK Punk,The Undertones,The Undertones,1979,UK,Teenage Kicks
+UK Punk,999,999,1978,UK,Melodic punk
+UK Punk,The Rezillos,Can't Stand the Rezillos,1978,UK,New wave punk
+UK Punk,The Skids,Scared to Dance,1979,UK,Scottish punk
+UK Punk,Eddie and the Hot Rods,Teenage Depression,1976,UK,Pub rock punk
+UK Punk,Stiff Little Fingers,Inflammable Material,1979,UK,Northern Ireland
+UK Punk,The Ruts,The Crack,1979,UK,Reggae punk
+UK Punk,UK Subs,Another Kind of Blues,1979,UK,Street punk
+US Punk,Television,Marquee Moon,1977,US,Art punk
+US Punk,Talking Heads,Talking Heads: 77,1977,US,New wave punk
+US Punk,Richard Hell & The Voidoids,Blank Generation,1977,US,CBGB scene
+US Punk,The Dictators,Go Girl Crazy!,1975,US,Proto-punk
+US Punk,X,Los Angeles,1980,US,LA punk
+US Punk,Germs,GI,1979,US,Darby Crash
+US Punk,Adolescents,Adolescents,1981,US,Blue album
+US Punk,Agent Orange,Living in Darkness,1981,US,Surf punk
+US Punk,TSOL,Dance with Me,1981,US,Death rock
+US Punk,7 Seconds,The Crew,1984,US,Positive hardcore
+New Wave,Blondie,Parallel Lines,1978,US,Debbie Harry icon
+New Wave,The Cars,The Cars,1978,US,New wave pop
+New Wave,Elvis Costello,This Year's Model,1978,UK,Angry young man
+New Wave,Devo,Q: Are We Not Men? A: We Are Devo!,1978,US,De-evolution
+New Wave,The B-52's,The B-52's,1979,US,Party wave
+New Wave,The Pretenders,Pretenders,1980,UK,Chrissie Hynde
+New Wave,XTC,Drums and Wires,1979,UK,Angular pop
+New Wave,Squeeze,Cool for Cats,1979,UK,British wit
+New Wave,The Police,Outlandos d'Amour,1978,UK,Reggae rock
+New Wave,Joe Jackson,Look Sharp!,1979,UK,Pub rock new wave
+Synth Pop,The Human League,Reproduction,1979,UK,Early synth
+Synth Pop,A Flock of Seagulls,A Flock of Seagulls,1982,UK,Hair band
+Synth Pop,Soft Cell,The Art of Falling Apart,1983,UK,Marc Almond
+Synth Pop,Depeche Mode,Music for the Masses,1987,UK,Stadium synth
+Synth Pop,Orchestral Manoeuvres in the Dark,Dazzle Ships,1983,UK,Experimental pop
+Synth Pop,Heaven 17,Penthouse and Pavement,1981,UK,Sophisticated synth
+Synth Pop,Bronski Beat,The Age of Consent,1984,UK,Jimmy Somerville
+Synth Pop,Visage,The Anvil,1982,UK,Steve Strange
+Synth Pop,Duran Duran,Duran Duran,1981,UK,Debut
+Synth Pop,Thompson Twins,Into the Gap,1984,UK,Pop synth
+Classic Rock,The Beatles,Abbey Road,1969,UK,Zebra crossing
+Classic Rock,Led Zeppelin,Physical Graffiti,1975,UK,Tenement building
+Classic Rock,Pink Floyd,Wish You Were Here,1975,UK,Burning man
+Classic Rock,The Who,Who's Next,1971,UK,Monolith cover
+Classic Rock,The Rolling Stones,Sticky Fingers,1971,UK,Zipper jeans
+Classic Rock,Cream,Fresh Cream,1966,UK,Debut album
+Classic Rock,The Doors,L.A. Woman,1971,US,Final album
+Classic Rock,Jimi Hendrix,Axis: Bold as Love,1967,US,Psychedelic art
+Classic Rock,Santana,Abraxas,1970,US,Angel painting
+Classic Rock,Creedence Clearwater Revival,Cosmo's Factory,1970,US,Factory design
+Classic Rock,The Band,Music from Big Pink,1968,US,Bob Dylan basement
+Classic Rock,Derek and the Dominos,Layla and Other Assorted Love Songs,1970,UK,Eric Clapton blues
+Classic Rock,The Yardbirds,Roger the Engineer,1966,UK,Cartoon cover
+Classic Rock,The Animals,The Animals,1964,UK,R&B rock
+Classic Rock,Procol Harum,A Salty Dog,1969,UK,Maritime theme
+Classic Rock,Traffic,The Low Spark of High Heeled Boys,1971,UK,Steve Winwood
+Classic Rock,Humble Pie,Performance Rockin' the Fillmore,1971,UK,Live album
+Classic Rock,Bad Company,Bad Company,1974,UK,Supergroup
+Classic Rock,Foghat,Fool for the City,1975,UK,Blues rock
+Classic Rock,Free,All Right Now,1970,UK,Blues rock anthem
+Classic Rock,Lynyrd Skynyrd,Second Helping,1974,US,Sweet Home Alabama
+Classic Rock,The Doobie Brothers,Toulouse Street,1972,US,Harmony rock
+Classic Rock,Chicago,Chicago Transit Authority,1969,US,Horn rock
+Classic Rock,Blood Sweat & Tears,Child Is Father to the Man,1968,US,Jazz rock
+Classic Rock,Steely Dan,Can't Buy a Thrill,1972,US,Jazz fusion rock
+Post-Punk,Siouxsie and the Banshees,Kaleidoscope,1980,UK,Gothic pop
+Post-Punk,Echo & the Bunnymen,Crocodiles,1980,UK,Liverpool sound
+Post-Punk,Talking Heads,Remain in Light,1980,US,Afrobeat influence
+Post-Punk,The Chameleons,Script of the Bridge,1983,UK,Atmospheric
+Post-Punk,Killing Joke,Killing Joke,1980,UK,Industrial post-punk
+Post-Punk,Psychedelic Furs,The Psychedelic Furs,1980,UK,Art rock
+Post-Punk,Josef K,The Only Fun in Town,1981,UK,Scottish post-punk
+Post-Punk,The Sound,Jeopardy,1980,UK,Melodic post-punk
+Post-Punk,Dif Juz,Extractions,1985,UK,Instrumental
+Post-Punk,A Certain Ratio,To Each...,1981,UK,Funk punk
+Modern Hip Hop,Kendrick Lamar,good kid m.A.A.d city,2012,US,Concept album
+Modern Hip Hop,Drake,Take Care,2011,US,Emo rap
+Modern Hip Hop,J. Cole,2014 Forest Hills Drive,2014,US,Conscious rap
+Modern Hip Hop,Childish Gambino,Because the Internet,2013,US,Internet age
+Modern Hip Hop,Kid Cudi,Man on the Moon: The End of Day,2009,US,Space theme
+Indie Rock,LCD Soundsystem,LCD Soundsystem,2005,US,Dance punk
+Indie Rock,TV on the Radio,Return to Cookie Mountain,2006,US,Art rock
+Indie Rock,Grizzly Bear,Veckatimest,2009,US,Chamber indie
+Indie Rock,Animal Collective,Merriweather Post Pavilion,2009,US,Psychedelic pop
+Indie Rock,Fleet Foxes,Fleet Foxes,2008,US,Folk harmonies

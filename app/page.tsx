@@ -416,6 +416,34 @@ export default function Home() {
               {renderLeaderboard(weeklyLeaderboard, 'Weekly')}
               {renderLeaderboard(monthlyLeaderboard, 'Monthly')}
             </div>
+
+            {/* Info Block */}
+            <div className="info-section">
+              <div className="info-paper">
+                <h2 className="info-title">About Cover Up</h2>
+                <p className="info-text">
+                  A daily music game where you identify five pixelated album covers before time runs out. 
+                  Three rounds, different genres, compete on the leaderboards. The faster you guess, the higher you score.
+                </p>
+                
+                <h3 className="info-subtitle">How to Play</h3>
+                <p className="info-text">
+                  Click an album to start its timer. Type the artist name. Covers get clearer every 7 seconds. 
+                  Complete all five to earn a 250-point bonus.
+                </p>
+                
+                <h3 className="info-subtitle">Daily Challenge</h3>
+                <p className="info-text">
+                  New albums every day across 40+ genres from Britpop to Trip-Hop. 
+                  Popular genres appear more often, but every day brings something different.
+                </p>
+                
+                <p className="info-footer">
+                  Just for fun - no prizes, just bragging rights and music nostalgia. Come back tomorrow!
+                </p>
+              </div>
+            </div>
+
           </div>
         </div>
       </>
@@ -496,6 +524,34 @@ export default function Home() {
             {renderLeaderboard(weeklyLeaderboard, 'Weekly')}
             {renderLeaderboard(monthlyLeaderboard, 'Monthly')}
           </div>
+
+          {/* Info Block */}
+          <div className="info-section">
+            <div className="info-paper">
+              <h2 className="info-title">About Cover Up</h2>
+              <p className="info-text">
+                A daily music game where you identify five pixelated album covers before time runs out. 
+                Three rounds, different genres, compete on the leaderboards. The faster you guess, the higher you score.
+              </p>
+              
+              <h3 className="info-subtitle">How to Play</h3>
+              <p className="info-text">
+                Click an album to start its timer. Type the artist name. Covers get clearer every 7 seconds. 
+                Complete all five to earn a 250-point bonus.
+              </p>
+              
+              <h3 className="info-subtitle">Daily Challenge</h3>
+              <p className="info-text">
+                New albums every day across 40+ genres from Britpop to Trip-Hop. 
+                Popular genres appear more often, but every day brings something different.
+              </p>
+              
+              <p className="info-footer">
+                Just for fun - no prizes, just bragging rights and music nostalgia. Come back tomorrow!
+              </p>
+            </div>
+          </div>
+
         </div>
       </div>
 

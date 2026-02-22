@@ -79,24 +79,67 @@ export async function searchAlbumsByGenre(
 }
 
 export async function getCoverArt(mbid: string): Promise<string | null> {
-  const url = `${COVERART_API}/release-group/${mbid}`;
+  // First try release-group endpoint
+  const rgUrl = `${COVERART_API}/release-group/${mbid}`;
   
   try {
-    const response = await fetch(url);
+    const response = await fetch(rgUrl);
     
-    if (!response.ok) {
+    if (response.ok) {
+      const data = await response.json();
+      
+      const frontCover = data.images?.find((img: any) => 
+        img.front === true || img.types?.includes('Front')
+      );
+      
+      const coverImage = frontCover || data.images?.[0];
+      
+      return coverImage?.thumbnails?.large || coverImage?.image || null;
+    }
+  } catch (error) {
+    console.log(`Release-group cover not found for ${mbid}, trying releases...`);
+  }
+  
+  // If release-group failed, try getting releases in that group
+  try {
+    await new Promise(resolve => setTimeout(resolve, 1100)); // Rate limit
+    
+    const releasesUrl = `${MUSICBRAINZ_API}/release?release-group=${mbid}&fmt=json&limit=1`;
+    const releasesResponse = await fetch(releasesUrl, {
+      headers: {
+        'User-Agent': 'CoverUpGame/1.0 (contact@coverup.game)',
+      },
+    });
+    
+    if (!releasesResponse.ok) {
       return null;
     }
     
-    const data = await response.json();
+    const releasesData = await releasesResponse.json();
+    const firstRelease = releasesData.releases?.[0];
     
-    const frontCover = data.images?.find((img: any) => 
+    if (!firstRelease) {
+      return null;
+    }
+    
+    // Try cover art for the first release
+    const releaseUrl = `${COVERART_API}/release/${firstRelease.id}`;
+    const releaseResponse = await fetch(releaseUrl);
+    
+    if (!releaseResponse.ok) {
+      return null;
+    }
+    
+    const releaseData = await releaseResponse.json();
+    
+    const frontCover = releaseData.images?.find((img: any) => 
       img.front === true || img.types?.includes('Front')
     );
     
-    const coverImage = frontCover || data.images?.[0];
+    const coverImage = frontCover || releaseData.images?.[0];
     
     return coverImage?.thumbnails?.large || coverImage?.image || null;
+    
   } catch (error) {
     console.error(`Error fetching cover art for ${mbid}:`, error);
     return null;

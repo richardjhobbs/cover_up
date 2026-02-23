@@ -1291,3 +1291,389 @@ body {
     font-size: 0.9rem;
   }
 }
+/* MOBILE GAME FLOW - Clean and simple */
+
+@media (max-width: 768px) {
+  
+  /* Hide desktop elements */
+  .page-container {
+    display: none !important;
+  }
+  
+  /* Mobile game flow */
+  .mobile-game-flow {
+    min-height: 100vh;
+    background: #1a1a1a;
+    padding: 1rem;
+    color: #fff;
+  }
+  
+  /* Header */
+  .mobile-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .mobile-title {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 2.5rem;
+    color: #d4af37;
+    margin-bottom: 0.5rem;
+  }
+  
+  .mobile-round-info {
+    font-family: 'Special Elite', cursive;
+    font-size: 1rem;
+    color: #f4f4f4;
+    margin-bottom: 0.25rem;
+  }
+  
+  .mobile-date {
+    font-size: 0.9rem;
+    color: #999;
+    margin-bottom: 0.5rem;
+  }
+  
+  .mobile-greeting {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 1.1rem;
+    color: #d4af37;
+  }
+  
+  .mobile-greeting span {
+    color: #f4cf67;
+  }
+  
+  /* Score */
+  .mobile-score {
+    background: #2a2a2a;
+    border: 3px solid #8B7355;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    max-width: 300px;
+    margin: 0 auto 2rem;
+  }
+  
+  .mobile-score-label {
+    font-family: 'Special Elite', cursive;
+    font-size: 0.9rem;
+    color: #f4f4f4;
+    margin-bottom: 0.5rem;
+  }
+  
+  .mobile-score-value {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 2.5rem;
+    color: #d4af37;
+  }
+  
+  /* Start section */
+  .mobile-start-section {
+    text-align: center;
+    padding: 2rem 1rem;
+  }
+  
+  .mobile-start-button {
+    width: 100%;
+    max-width: 350px;
+    padding: 1.25rem;
+    background: #f4d03f;
+    color: #2a2a2a;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.3rem;
+    font-family: 'Permanent Marker', cursive;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    text-transform: uppercase;
+  }
+  
+  .mobile-genre-label {
+    font-family: 'Special Elite', cursive;
+    font-size: 1.2rem;
+    color: #d4af37;
+    margin-top: 1rem;
+  }
+  
+  /* Complete section */
+  .mobile-complete-section {
+    text-align: center;
+    padding: 2rem 1rem;
+  }
+  
+  .mobile-complete-section h2 {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 2rem;
+    color: #d4af37;
+    margin-bottom: 2rem;
+  }
+  
+  .mobile-next-button {
+    width: 100%;
+    max-width: 350px;
+    padding: 1rem;
+    background: #4a7c59;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    font-family: 'Archivo Black', sans-serif;
+    cursor: pointer;
+  }
+  
+  /* Round modal */
+  .mobile-round-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.98);
+    z-index: 2000;
+    overflow-y: auto;
+    padding: 1rem;
+  }
+  
+  .mobile-modal-content {
+    max-width: 400px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-height: 100vh;
+    justify-content: center;
+    padding: 2rem 0;
+  }
+  
+  /* Progress */
+  .mobile-progress {
+    text-align: center;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 1.3rem;
+    color: #d4af37;
+  }
+  
+  /* Album display */
+  .mobile-album-display {
+    width: 100%;
+    max-width: 350px;
+    margin: 0 auto;
+  }
+  
+  .mobile-reveal-info {
+    text-align: center;
+    margin-top: 1rem;
+    font-family: 'Special Elite', cursive;
+  }
+  
+  .mobile-artist {
+    font-size: 1.2rem;
+    color: #d4af37;
+    margin-bottom: 0.5rem;
+  }
+  
+  .mobile-album-title {
+    font-size: 0.9rem;
+    color: #999;
+  }
+  
+  /* Input section */
+  .mobile-input-section {
+    width: 100%;
+    max-width: 350px;
+    margin: 0 auto;
+  }
+  
+  .mobile-chalkboard {
+    background: #2a2a2a;
+    border: 3px solid #8B7355;
+    border-radius: 8px;
+    padding: 1.5rem;
+  }
+  
+  .mobile-chalkboard h3 {
+    font-family: 'Special Elite', cursive;
+    color: #f4f4f4;
+    font-size: 1.5rem;
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  
+  .mobile-guess-input {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    background: #1a1a1a;
+    border: 2px solid #d4af37;
+    border-radius: 4px;
+    color: #fff;
+    font-family: 'Special Elite', cursive;
+  }
+  
+  .mobile-submit-button {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1.1rem;
+    background: #8B7355;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Archivo Black', sans-serif;
+  }
+  
+  .mobile-timer {
+    text-align: center;
+    margin-top: 0.75rem;
+    font-family: 'Special Elite', cursive;
+    font-size: 1rem;
+    color: #d4af37;
+  }
+  
+  /* Progress dots */
+  .mobile-dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+  
+  .mobile-dot {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 3px solid #8B7355;
+    background: #2a2a2a;
+    color: #fff;
+    font-size: 1.1rem;
+    font-family: 'Archivo Black', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .mobile-dot.completed {
+    background: #4a7c59;
+    border-color: #6b9f7f;
+  }
+  
+  .mobile-dot.timeout {
+    background: #b44141;
+    border-color: #ff6b6b;
+  }
+  
+  .mobile-dot.active {
+    background: #d4af37;
+    border-color: #f4cf67;
+    transform: scale(1.15);
+  }
+  
+  /* Game complete screen */
+  .mobile-comeback-message {
+    text-align: center;
+    font-family: 'Special Elite', cursive;
+    font-size: 1rem;
+    color: #f4f4f4;
+    margin: 2rem 0;
+    padding: 1rem;
+  }
+  
+  .mobile-leaderboard {
+    background: #2a2a2a;
+    border: 3px solid #8B7355;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .mobile-leaderboard h3 {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 1.3rem;
+    color: #d4af37;
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  
+  .mobile-leaderboard-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: #1a1a1a;
+    border-radius: 4px;
+    font-family: 'Special Elite', cursive;
+  }
+  
+  .mobile-leaderboard-entry.current-user {
+    background: #3a3a3a;
+    border: 2px solid #d4af37;
+  }
+  
+  .mobile-leaderboard-entry .rank {
+    font-weight: bold;
+    color: #d4af37;
+    min-width: 40px;
+  }
+  
+  .mobile-leaderboard-entry .name {
+    flex: 1;
+    color: #f4f4f4;
+  }
+  
+  .mobile-leaderboard-entry .score {
+    font-weight: bold;
+    color: #4a7c59;
+  }
+  
+  .mobile-leaderboard-entry.current-user .name {
+    color: #d4af37;
+  }
+  
+  /* About section */
+  .mobile-about {
+    background: #2a2a2a;
+    border: 3px solid #8B7355;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .mobile-about h2 {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 1.5rem;
+    color: #d4af37;
+    margin-bottom: 1rem;
+  }
+  
+  .mobile-about h3 {
+    font-family: 'Special Elite', cursive;
+    font-size: 1.2rem;
+    color: #f4cf67;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .mobile-about p {
+    font-family: 'Special Elite', cursive;
+    font-size: 0.95rem;
+    color: #f4f4f4;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
+  
+  .mobile-about-footer {
+    font-style: italic;
+    color: #d4af37;
+    margin-top: 1.5rem;
+    text-align: center;
+  }
+}
+
+/* Desktop - hide mobile */
+@media (min-width: 769px) {
+  .mobile-game-flow {
+    display: none !important;
+  }
+}

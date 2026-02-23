@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import AlbumSlot from '../components/AlbumSlot';
 import UsernameModal from '../components/UsernameModal';
+import MobileGameFlow from '../components/MobileGameFlow';
 
 type AlbumData = {
   slot: number;
@@ -51,6 +52,7 @@ export default function Home() {
   const [timedOutAlbums, setTimedOutAlbums] = useState<Set<number>>(new Set());
   const [highlightedAlbum, setHighlightedAlbum] = useState<number | null>(null);
   const [totalScore, setTotalScore] = useState(0);
+  const [currentRoundScore, setCurrentRoundScore] = useState(0);
   const [roundsCompleted, setRoundsCompleted] = useState(0);
   const [canAdvance, setCanAdvance] = useState(false);
   const [showRoundTransition, setShowRoundTransition] = useState(false);
@@ -103,7 +105,6 @@ export default function Home() {
 
       const data = await response.json();
 
-      // Check if already completed today
       if (data.alreadyExists && data.roundsCompleted === 3) {
         setGameComplete(true);
         setRoundsCompleted(3);
@@ -129,10 +130,10 @@ export default function Home() {
   async function loadRound(sessionId: number, roundNumber: number) {
     console.log('loadRound called with:', { sessionId, roundNumber });
     
-    // CRITICAL: Reset ALL game state BEFORE loading new round data
     setCompletedAlbums(new Set());
     setTimedOutAlbums(new Set());
     setHighlightedAlbum(null);
+    setCurrentRoundScore(0);
     
     try {
       const response = await fetch(`/api/get-round?sessionId=${sessionId}&roundNumber=${roundNumber}`);
@@ -214,6 +215,7 @@ export default function Home() {
       if (result.correct) {
         setCompletedAlbums(prev => new Set([...prev, slot]));
         setTotalScore(prev => prev + result.score);
+        setCurrentRoundScore(prev => prev + result.score);
 
         const nextSlot = slot + 1;
         if (nextSlot <= 5 && !completedAlbums.has(nextSlot) && !timedOutAlbums.has(nextSlot)) {
@@ -314,7 +316,12 @@ export default function Home() {
 
       if (!response.ok) {
         const error = await response.json();
-        alert(error.error || 'Failed to save profile');
+        
+        if (error.error && error.error.includes('already exists')) {
+          alert('Username already in use. Please try another name. Thanks!');
+        } else {
+          alert(error.error || 'Failed to save profile. Please try again.');
+        }
         return;
       }
 
@@ -326,7 +333,7 @@ export default function Home() {
 
     } catch (error) {
       console.error('Error saving profile:', error);
-      alert('Failed to save profile');
+      alert('Failed to save profile. Please try again.');
     }
   };
 
@@ -361,7 +368,6 @@ export default function Home() {
     );
   };
 
-  // Show username modal if no username
   if (!username) {
     return <UsernameModal onSubmit={handleUsernameSubmit} />;
   }
@@ -386,7 +392,6 @@ export default function Home() {
     );
   }
 
-  // Show completed game state
   if (gameComplete && !currentRound) {
     return (
       <>
@@ -417,7 +422,6 @@ export default function Home() {
               {renderLeaderboard(monthlyLeaderboard, 'Monthly')}
             </div>
 
-            {/* Info Block */}
             <div className="info-section">
               <div className="info-paper">
                 <h2 className="info-title">About Cover Up</h2>
@@ -443,7 +447,6 @@ export default function Home() {
                 </p>
               </div>
             </div>
-
           </div>
         </div>
       </>
@@ -462,6 +465,26 @@ export default function Home() {
 
   return (
     <>
+      {/* Mobile flow - only shows on mobile */}
+      <MobileGameFlow
+        roundNumber={currentRoundNumber}
+        genre={currentRound.genre}
+        username={username}
+        date={sessionData.date}
+        totalScore={totalScore}
+        gameComplete={gameComplete}
+        albums={currentRound.albums}
+        completedAlbums={completedAlbums}
+        timedOutAlbums={timedOutAlbums}
+        canAdvanceRound={canAdvance}
+        dailyLeaderboard={dailyLeaderboard}
+        weeklyLeaderboard={weeklyLeaderboard}
+        monthlyLeaderboard={monthlyLeaderboard}
+        onCorrectGuess={handleCorrectGuess}
+        onTimeout={handleTimeout}
+        onNextRound={completeRound}
+      />
+      
       <div className="page-container">
         <div className="content-wrapper">
           <header className="header">
@@ -525,7 +548,6 @@ export default function Home() {
             {renderLeaderboard(monthlyLeaderboard, 'Monthly')}
           </div>
 
-          {/* Info Block */}
           <div className="info-section">
             <div className="info-paper">
               <h2 className="info-title">About Cover Up</h2>
@@ -554,7 +576,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Round Transition Modal */}
       {showRoundTransition && (
         <div className="modal-overlay">
           <div className="round-transition-modal">
@@ -572,7 +593,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Comeback Tomorrow Modal */}
       {showComeback && (
         <div className="modal-overlay" onClick={() => setShowComeback(false)}>
           <div className="comeback-modal" onClick={(e) => e.stopPropagation()}>

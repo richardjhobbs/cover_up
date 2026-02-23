@@ -201,6 +201,30 @@ if (album.cover_url) {
     }
   }, [elapsedTime, localRevealed, timedOut]);
 
+useEffect(() => {
+  // Auto-scroll on mobile when album is revealed
+  if (isRevealed && typeof window !== 'undefined' && window.innerWidth <= 768) {
+    const timer = setTimeout(() => {
+      const nextSlot = slot + 1;
+      const nextElement = document.querySelector(`[data-slot="${nextSlot}"]`);
+      
+      if (nextElement) {
+        nextElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+        
+        const nextInput = nextElement.querySelector('.guess-input') as HTMLInputElement;
+        if (nextInput && !nextInput.disabled) {
+          setTimeout(() => nextInput.focus(), 500);
+        }
+      }
+    }, 1500);
+    
+    return () => clearTimeout(timer);
+  }
+}, [isRevealed, slot]);
+
   const drawPixelated = () => {
     if (!canvasRef.current || !imageRef.current) return;
 
@@ -267,13 +291,12 @@ if (album.cover_url) {
     }
   };
 
-  return (
+ return (
     <>
-      <div className="album-slot">
+      <div className="album-slot" data-slot={slot}>
         <div 
           className={`album-cover-container ${isHighlighted ? 'highlighted' : ''}`}
           onClick={handleClick}
-          data-slot={slot}
         >
           <canvas ref={canvasRef} className="album-canvas" />
 

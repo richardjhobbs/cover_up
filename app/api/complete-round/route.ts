@@ -29,16 +29,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Round already completed' }, { status: 400 });
     }
 
-    // Check how many albums were guessed correctly in this round
+    // FIXED: Check how many albums were guessed correctly WITH ACTUAL POINTS
     const { data: attempts } = await supabaseServer
       .from('album_attempts')
-      .select('is_correct')
+      .select('is_correct, score')
       .eq('round_id', roundId);
 
-    const correctCount = attempts?.filter(a => a.is_correct).length || 0;
-    const shouldAwardBonus = correctCount === 5;
+    // Count albums that were correct AND earned points (score > 0)
+    const correctWithPoints = attempts?.filter(a => a.is_correct && a.score > 0).length || 0;
+    
+    console.log('Round completion check:', {
+      totalAttempts: attempts?.length,
+      correctWithPoints,
+      shouldAwardBonus: correctWithPoints === 5
+    });
+    
+    // ONLY award bonus if all 5 were correct AND earned points
+    const shouldAwardBonus = correctWithPoints === 5;
 
-    // Add completion bonus ONLY if all 5 correct
+    // Add completion bonus ONLY if all 5 correct with points
     const finalRoundScore = round.round_score + (shouldAwardBonus ? COMPLETION_BONUS : 0);
 
     // Mark round as completed

@@ -12,18 +12,43 @@ function calculateScore(timeMs: number): number {
   return 0;
 }
 
-// Normalize for comparison (SAME as frontend)
-function normalizeForComparison(text: string): string {
+// COMPREHENSIVE normalization for artist matching
+function normalizeArtist(text: string): string {
   return text
     .toLowerCase()
     .trim()
-    .replace(/^the\s+/i, '')
-    .replace(/^a\s+/i, '')
+    // Convert symbols to words FIRST (before removing punctuation)
+    .replace(/\s*&\s*/g, ' and ')           // & → and
+    .replace(/\s*\+\s*/g, ' and ')          // + → and
+    .replace(/\s*vs\.?\s*/gi, ' versus ')   // vs/vs. → versus
+    .replace(/\s*ft\.?\s*/gi, ' featuring ') // ft/ft. → featuring
+    .replace(/\s*feat\.?\s*/gi, ' featuring ') // feat → featuring
+    // Convert numbers to words
+    .replace(/\b4\b/g, 'four')
+    .replace(/\b2\b/g, 'two')
+    .replace(/\b3\b/g, 'three')
+    .replace(/\b1\b/g, 'one')
+    // Remove common articles and words
+    .replace(/^the\s+/i, '')                // Remove "the" from start
+    .replace(/^a\s+/i, '')                  // Remove "a" from start
+    .replace(/\s+the\s+/gi, ' ')            // Remove "the" from middle
+    .replace(/\s+a\s+/gi, ' ')              // Remove "a" from middle
+    .replace(/\s+and\s+the\s+/gi, ' and ')  // Normalize "and the" → "and"
+    // Remove ALL punctuation and special characters
     .replace(/[^a-z0-9\s]/g, '')
-    .replace(/\s+/g, ' ');
+    // Normalize whitespace
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
-// Levenshtein distance (SAME as frontend)
+// Extract all significant words (for partial matching)
+function extractWords(text: string): string[] {
+  return text
+    .split(' ')
+    .filter(word => word.length > 2); // Only words longer than 2 chars
+}
+
+// Levenshtein distance for typo tolerance
 function levenshteinDistance(a: string, b: string): number {
   const matrix: number[][] = [];
 
@@ -52,19 +77,65 @@ function levenshteinDistance(a: string, b: string): number {
   return matrix[b.length][a.length];
 }
 
-// Fuzzy match (SAME as frontend)
+// COMPREHENSIVE fuzzy matching
 function fuzzyMatch(guess: string, actual: string): boolean {
-  const normalizedGuess = normalizeForComparison(guess);
-  const normalizedActual = normalizeForComparison(actual);
+  const normalizedGuess = normalizeArtist(guess);
+  const normalizedActual = normalizeArtist(actual);
   
-  if (normalizedGuess === normalizedActual) return true;
+  console.log('=== FUZZY MATCH ===');
+  console.log('Original guess:', guess);
+  console.log('Original actual:', actual);
+  console.log('Normalized guess:', normalizedGuess);
+  console.log('Normalized actual:', normalizedActual);
   
-  if (normalizedActual.includes(normalizedGuess) && normalizedGuess.length > 3) return true;
+  // Rule 1: Exact match after normalization
+  if (normalizedGuess === normalizedActual) {
+    console.log('✓ Match: Exact');
+    return true;
+  }
   
+  // Rule 2: One contains the other (for partial artist names)
+  // Only if the substring is meaningful (>3 chars)
+  if (normalizedGuess.length > 3 && normalizedActual.includes(normalizedGuess)) {
+    console.log('✓ Match: Guess contained in actual');
+    return true;
+  }
+  
+  if (normalizedActual.length > 3 && normalizedGuess.includes(normalizedActual)) {
+    console.log('✓ Match: Actual contained in guess');
+    return true;
+  }
+  
+  // Rule 3: All significant words from actual are in guess
+  // Example: guess "jimi hendrix" matches actual "jimi hendrix experience"
+  const guessWords = extractWords(normalizedGuess);
+  const actualWords = extractWords(normalizedActual);
+  
+  if (actualWords.length > 0 && actualWords.every(word => normalizedGuess.includes(word))) {
+    console.log('✓ Match: All actual words in guess');
+    return true;
+  }
+  
+  if (guessWords.length > 0 && guessWords.every(word => normalizedActual.includes(word))) {
+    console.log('✓ Match: All guess words in actual');
+    return true;
+  }
+  
+  // Rule 4: Levenshtein distance tolerance (typos)
   const distance = levenshteinDistance(normalizedGuess, normalizedActual);
-  const tolerance = Math.max(1, Math.floor(normalizedActual.length * 0.15));
+  const longerLength = Math.max(normalizedGuess.length, normalizedActual.length);
+  // Allow 20% character difference, minimum 2 characters
+  const tolerance = Math.max(2, Math.floor(longerLength * 0.2));
   
-  return distance <= tolerance;
+  console.log('Levenshtein:', { distance, tolerance, longerLength });
+  
+  if (distance <= tolerance) {
+    console.log('✓ Match: Levenshtein within tolerance');
+    return true;
+  }
+  
+  console.log('✗ No match');
+  return false;
 }
 
 export async function POST(request: Request) {
@@ -96,14 +167,12 @@ export async function POST(request: Request) {
 
     const slot = roundAlbum?.slot || 0;
 
-    // Check if guess is correct using SAME fuzzy match as frontend
+    // Check if guess is correct using COMPREHENSIVE fuzzy match
     const correct = fuzzyMatch(guessText, album.artist);
     
-    console.log('Fuzzy match check:', { 
-      guess: guessText, 
-      artist: album.artist, 
-      correct 
-    });
+    console.log('===================');
+    console.log('FINAL RESULT:', correct ? 'CORRECT ✓' : 'WRONG ✗');
+    console.log('===================');
     
     // Calculate score
     const score = correct ? calculateScore(timeMs) : 0;

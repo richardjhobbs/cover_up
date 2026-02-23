@@ -131,7 +131,7 @@ export default function AlbumSlot({
     const img = new Image();
     img.crossOrigin = 'anonymous';
     
-   // Use direct cover art URLs (Cover Art Archive has CORS enabled)
+   // Use direct Supabase Storage URLs (no proxy needed)
 if (album.cover_url) {
   img.src = album.cover_url;
 } else {

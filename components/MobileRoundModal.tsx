@@ -41,6 +41,7 @@ export default function MobileRoundModal({
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
   const hasCalledComplete = useRef<boolean>(false);
+  const currentPixelLevelRef = useRef<number>(0); // Track current level in ref
   
   const currentAlbum = albums[currentIndex];
   const isCompleted = currentAlbum ? completedAlbums.has(currentAlbum.slot) : false;
@@ -75,9 +76,12 @@ export default function MobileRoundModal({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
+    // Reset all state for new album
     setGuess('');
     setTimeLeft(21);
-    setPixelLevel(0);
+    setPixelLevel(0); // Critical: reset to 0 for new album
+    setShowingResult(false);
+    currentPixelLevelRef.current = 0; // Reset ref too
     startTimeRef.current = Date.now();
     
     const img = new Image();
@@ -88,12 +92,16 @@ export default function MobileRoundModal({
       imageRef.current = img;
       canvas.width = img.width;
       canvas.height = img.height;
+      // Draw initial pixelated version
       drawPixelated(ctx, img, 0);
       startTimer();
     };
     
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     };
   }, [currentIndex]);
   
@@ -111,23 +119,22 @@ export default function MobileRoundModal({
           return 0;
         }
         
-        // Calculate elapsed time from 21 seconds
-        const elapsed = 21 - newTime;
-        
-        // Determine pixelation level based on elapsed time
-        // 0-6s elapsed (21-15s remaining) = level 0 (most pixelated)
-        // 7-13s elapsed (14-8s remaining) = level 1 (medium)
-        // 14-21s elapsed (7-0s remaining) = level 2 (least pixelated)
+        // Calculate level based on time REMAINING (what user sees)
+        // When timer shows 14s or less → reveal to level 1
+        // When timer shows 7s or less → reveal to level 2
         let newLevel = 0;
-        if (elapsed >= 14) {
+        if (prev <= 7) {
           newLevel = 2;
-        } else if (elapsed >= 7) {
+        } else if (prev <= 14) {
           newLevel = 1;
         }
         
-        // Update pixelation whenever level changes
-        if (newLevel !== pixelLevel) {
+        // Use ref to avoid stale state comparison
+        if (newLevel !== currentPixelLevelRef.current) {
+          currentPixelLevelRef.current = newLevel;
           setPixelLevel(newLevel);
+          
+          console.log(`Pixelation transition: timeLeft=${prev}, newLevel=${newLevel}`);
           
           // Immediately redraw with new level
           if (canvasRef.current && imageRef.current) {

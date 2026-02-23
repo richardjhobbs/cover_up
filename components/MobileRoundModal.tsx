@@ -133,16 +133,20 @@ export default function MobileRoundModal({
     if (!canvasRef.current) return;
     
     const canvas = canvasRef.current;
-    const pixelSizes = [32, 16, 4]; // heavy, medium, clear
-    const size = pixelSizes[level] || 32;
+    // FIXED: Larger numbers = LESS pixelated (to match desktop)
+    // Desktop uses: 25 (heavy) → 45 (medium) → 70 (clear)
+    // Mobile uses: 25 (heavy) → 45 (medium) → 70 (clear)
+    const pixelSizes = [25, 45, 70]; // level 0 = heavy, level 1 = medium, level 2 = clear
+    const pixelSize = pixelSizes[level] || 25;
     
     const w = img.width;
     const h = img.height;
     
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, w, h);
-    ctx.drawImage(img, 0, 0, w / size, h / size);
-    ctx.drawImage(canvas, 0, 0, w / size, h / size, 0, 0, w, h);
+    // Draw small then scale up = pixelation effect
+    ctx.drawImage(img, 0, 0, pixelSize, pixelSize);
+    ctx.drawImage(canvas, 0, 0, pixelSize, pixelSize, 0, 0, w, h);
   };
   
   const handleSubmit = () => {

@@ -108,20 +108,34 @@ export default function MobileRoundModal({
         if (newTime <= 0) {
           if (timerRef.current) clearInterval(timerRef.current);
           onTimeout(currentAlbum.slot);
-          // Don't advance here - wait for parent to update timedOutAlbums
           return 0;
         }
         
-        // Pixelation: 0-6s = level 0 (heavy), 7-13s = level 1, 14-21s = level 2 (clear)
+        // Calculate elapsed time from 21 seconds
         const elapsed = 21 - newTime;
-        let newLevel = 0;
-        if (elapsed >= 7 && elapsed < 14) newLevel = 1;
-        if (elapsed >= 14) newLevel = 2;
         
-        if (newLevel !== pixelLevel && canvasRef.current && imageRef.current) {
+        // Determine pixelation level based on elapsed time
+        // 0-6s elapsed (21-15s remaining) = level 0 (most pixelated)
+        // 7-13s elapsed (14-8s remaining) = level 1 (medium)
+        // 14-21s elapsed (7-0s remaining) = level 2 (least pixelated)
+        let newLevel = 0;
+        if (elapsed >= 14) {
+          newLevel = 2;
+        } else if (elapsed >= 7) {
+          newLevel = 1;
+        }
+        
+        // Update pixelation whenever level changes
+        if (newLevel !== pixelLevel) {
           setPixelLevel(newLevel);
-          const ctx = canvasRef.current.getContext('2d');
-          if (ctx) drawPixelated(ctx, imageRef.current, newLevel);
+          
+          // Immediately redraw with new level
+          if (canvasRef.current && imageRef.current) {
+            const ctx = canvasRef.current.getContext('2d');
+            if (ctx) {
+              drawPixelated(ctx, imageRef.current, newLevel);
+            }
+          }
         }
         
         return newTime;

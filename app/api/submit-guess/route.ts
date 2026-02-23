@@ -17,6 +17,9 @@ function normalizeArtist(text: string): string {
   return text
     .toLowerCase()
     .trim()
+    // Remove diacritics/accents (ö → o, ü → u, é → e, etc.)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     // Convert symbols to words FIRST (before removing punctuation)
     .replace(/\s*&\s*/g, ' and ')           // & → and
     .replace(/\s*\+\s*/g, ' and ')          // + → and

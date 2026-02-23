@@ -11,7 +11,7 @@ type Album = {
   artist: string;
   title: string;
   year: number | null;
-  coverUrl: string;
+  coverUrl: string | null; // Changed from string to string | null
 };
 
 type MobileGameFlowProps = {
